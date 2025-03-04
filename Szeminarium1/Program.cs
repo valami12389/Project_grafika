@@ -127,11 +127,11 @@ namespace Szeminarium1
             };
 
             uint vertices = Gl.GenBuffer();
-            //eltavolitottam a Blindbuffert igy egy ures feher kepernyot kapok,mert a BufferData gondolom nem tudja hogy melyik 
-            //buferrel dolgozik jelen esetben
+            Gl.BindBuffer(GLEnum.ArrayBuffer, vertices);
             Gl.BufferData(GLEnum.ArrayBuffer, (ReadOnlySpan<float>)vertexArray.AsSpan(), GLEnum.StaticDraw);
             Gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, null);
-            Gl.EnableVertexAttribArray(0);
+            //kitoroltem a EnableVertexAttribArray parancsot es ugyanugy egy feher kepernyot kapok,mert igy nem fer hozza a megfelelo
+            //atributumokhoz
 
             uint colors = Gl.GenBuffer();
             Gl.BindBuffer(GLEnum.ArrayBuffer, colors);
