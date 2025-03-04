@@ -75,9 +75,11 @@ namespace Szeminarium1
             Gl.CompileShader(fshader);
 
             program = Gl.CreateProgram();
-            Gl.AttachShader(program, vshader);
-            Gl.AttachShader(program, fshader);
             Gl.LinkProgram(program);
+            Gl.AttachShader(program, vshader);
+            Gl.AttachShader(program, fshader); 
+            // megcsereltem a LinkProgram es az AttachShaderek sorrendjet es ugyanugy egy ures feher kepernyot kapok
+            //feltetelezem hogy linkelni probalja az shadert de az meg nincs hozzarendelve ezert nem megy
             Gl.DetachShader(program, vshader);
             Gl.DetachShader(program, fshader);
             Gl.DeleteShader(vshader);
