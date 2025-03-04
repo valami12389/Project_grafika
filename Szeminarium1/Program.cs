@@ -130,14 +130,13 @@ namespace Szeminarium1
             Gl.BindBuffer(GLEnum.ArrayBuffer, vertices);
             Gl.BufferData(GLEnum.ArrayBuffer, (ReadOnlySpan<float>)vertexArray.AsSpan(), GLEnum.StaticDraw);
             Gl.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, null);
-            //kitoroltem a EnableVertexAttribArray parancsot es ugyanugy egy feher kepernyot kapok,mert igy nem fer hozza a megfelelo
-            //atributumokhoz
+            Gl.EnableVertexAttribArray(0);
 
             uint colors = Gl.GenBuffer();
             Gl.BindBuffer(GLEnum.ArrayBuffer, colors);
             Gl.BufferData(GLEnum.ArrayBuffer, (ReadOnlySpan<float>)colorArray.AsSpan(), GLEnum.StaticDraw);
             Gl.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, 0, null);
-            Gl.EnableVertexAttribArray(1);
+            Gl.EnableVertexAttribArray(2); // fekete lesz a haromszogem, valoszinuleg mert nem eri el a color-t ,hibas indexet adok at
 
             uint indices = Gl.GenBuffer();
             Gl.BindBuffer(GLEnum.ElementArrayBuffer, indices);
