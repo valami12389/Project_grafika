@@ -13,7 +13,7 @@ namespace Szeminarium1
 
         private static readonly string VertexShaderSource = @"
         #version 330 core
-        layout (location = 0) in vec3 vPos;
+        layout (location = 2) in vec3 vPos; 
 		layout (location = 1) in vec4 vCol;
 
 		out vec4 outCol;
@@ -24,7 +24,7 @@ namespace Szeminarium1
             gl_Position = vec4(vPos.x, vPos.y, vPos.z, 1.0);
         }
         ";
-
+        //valtoztattam a locationt es ugyanugy ures ablakot kapok
 
         private static readonly string FragmentShaderSource = @"
         #version 330 core
@@ -75,11 +75,9 @@ namespace Szeminarium1
             Gl.CompileShader(fshader);
 
             program = Gl.CreateProgram();
-            Gl.LinkProgram(program);
             Gl.AttachShader(program, vshader);
-            Gl.AttachShader(program, fshader); 
-            // megcsereltem a LinkProgram es az AttachShaderek sorrendjet es ugyanugy egy ures feher kepernyot kapok
-            //feltetelezem hogy linkelni probalja az shadert de az meg nincs hozzarendelve ezert nem megy
+            Gl.AttachShader(program, fshader);
+            Gl.LinkProgram(program);
             Gl.DetachShader(program, vshader);
             Gl.DetachShader(program, fshader);
             Gl.DeleteShader(vshader);
@@ -138,7 +136,7 @@ namespace Szeminarium1
             Gl.BindBuffer(GLEnum.ArrayBuffer, colors);
             Gl.BufferData(GLEnum.ArrayBuffer, (ReadOnlySpan<float>)colorArray.AsSpan(), GLEnum.StaticDraw);
             Gl.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, 0, null);
-            Gl.EnableVertexAttribArray(2); // fekete lesz a haromszogem, valoszinuleg mert nem eri el a color-t ,hibas indexet adok at
+            Gl.EnableVertexAttribArray(1); // fekete lesz a haromszogem, valoszinuleg mert nem eri el a color-t ,hibas indexet adok at
 
             uint indices = Gl.GenBuffer();
             Gl.BindBuffer(GLEnum.ElementArrayBuffer, indices);
