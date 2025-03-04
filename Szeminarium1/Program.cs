@@ -108,22 +108,22 @@ namespace Szeminarium1
             Gl.BindVertexArray(vao);
 
             float[] vertexArray = new float[] {
-                -0.5f, -0.5f, 0.0f,
+                -0.5f, -0.5f, 0.85f, //itt meg atirtam egy pont z koordinatajat ezert maskepp helyezkedik el az adott pont
                 +0.5f, -0.5f, 0.0f,
                  0.0f, +0.5f, 0.0f,
-                 1f, 1f, 0f
+                                    //toroltem egy pontot es ezert valtozott a haromszog maga 
             };
 
             float[] colorArray = new float[] {
                 1.0f, 0.0f, 0.0f, 1.0f,
                 0.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
+                0.65f, 0.78f, 0.0f, 1.0f,//atirtam ebben a sorban szin ertekeket es ezert valtozott maga a haromszog szine
                 1.0f, 0.0f, 0.0f, 1.0f,
             };
 
             uint[] indexArray = new uint[] { 
-                0, 1, 2,
-                2, 1, 3
+                0, 1,               //toroltem egy pontot
+                2, 1, 3                 
             };
 
             uint vertices = Gl.GenBuffer();
