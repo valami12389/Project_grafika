@@ -13,7 +13,7 @@ namespace Szeminarium1
 
         private static readonly string VertexShaderSource = @"
         #version 330 core
-        layout (location = 2) in vec3 vPos; 
+        layout (location = 0) in vec3 vPos; 
 		layout (location = 1) in vec4 vCol;
 
 		out vec4 outCol;
@@ -24,20 +24,19 @@ namespace Szeminarium1
             gl_Position = vec4(vPos.x, vPos.y, vPos.z, 1.0);
         }
         ";
-        //valtoztattam a locationt es ugyanugy ures ablakot kapok
 
         private static readonly string FragmentShaderSource = @"
         #version 330 core
-        out vec4 FragColor;
+        out vec3 FragColor;
 		
-		in vec4 outCol;
+		in vec3 outCol;
 
         void main()
         {
             FragColor = outCol;
         }
         ";
-
+        //itt a vec4-et vec3-ra irtam ugyanugy ures ablakot eredmenyez
         static void Main(string[] args)
         {
             WindowOptions windowOptions = WindowOptions.Default;
