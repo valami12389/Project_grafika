@@ -124,28 +124,28 @@ namespace Szeminarium1
             float[] vertexArray = new float[] {
 
                 0f,1f,0f, // 0
-                (float)(Math.Sqrt(3)/2),(float)(1/2),0f, // 1
-                (float)(-Math.Sqrt(3)/2),(float)(1/2),0f, // 2
+                (float)(Math.Sqrt(3)/2),0.5f,0f, // 1
+                (float)(-Math.Sqrt(3)/2),0.5f,0f, // 2
 
                 0f,0f,0f, //3
-                (float)(Math.Sqrt(3)/2),(float)(1/2),0f, // 4
-                (float)(-Math.Sqrt(3)/2),(float)(1/2),0f, // 5
+                (float)(Math.Sqrt(3)/2),0.5f,0f, // 4
+                (float)(-Math.Sqrt(3)/2),0.5f,0f, // 5
 
                 0f,0f,0f, // 6
-                (float)(-Math.Sqrt(3)/2),(float)(1/2),0f, // 7
+                (float)(-Math.Sqrt(3)/2),0.5f,0f, // 7
                 0f,-1f,0f, // 8
 
-                (float)(-Math.Sqrt(3)/2),(float)(1/2),0f, // 9
+                (float)(-Math.Sqrt(3)/2),0.5f,0f, // 9
                 0f,-1f,0f,  // 10
-                (float)(-Math.Sqrt(3)/2),(float)(-1/2),0f, // 11
+                (float)(-Math.Sqrt(3)/2),-0.5f,0f, // 11
 
                 0f,0f,0f, // 12
-                (float)(Math.Sqrt(3)/2),(float)(1/2),0f, // 13
+                (float)(Math.Sqrt(3)/2),0.5f,0f, // 13
                 0f,-1f,0f, // 14
 
                 0f,-1f,0f, //15
-                (float)(Math.Sqrt(3)/2),(float)(-1/2),0f, // 16
-                (float)(Math.Sqrt(3)/2),(float)(1/2),0f, // 17
+                (float)(Math.Sqrt(3)/2),-0.5f,0f, // 16
+                (float)(Math.Sqrt(3)/2),0.5f,0f, // 17
             };
 
             float[] colorArray = new float[] {
