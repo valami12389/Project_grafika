@@ -1,5 +1,6 @@
 ﻿using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
+using System.Runtime.ConstrainedExecution;
 
 namespace Szeminarium1
 {
@@ -13,7 +14,7 @@ namespace Szeminarium1
 
         private static readonly string VertexShaderSource = @"
         #version 330 core
-        layout (location = 0) in vec3 vPos; 
+        layout (location = 0) in vec3 vPos;
 		layout (location = 1) in vec4 vCol;
 
 		out vec4 outCol;
@@ -25,18 +26,19 @@ namespace Szeminarium1
         }
         ";
 
+
         private static readonly string FragmentShaderSource = @"
         #version 330 core
-        out vec3 FragColor;
+        out vec4 FragColor;
 		
-		in vec3 outCol;
+		in vec4 outCol;
 
         void main()
         {
             FragColor = outCol;
         }
         ";
-        //itt a vec4-et vec3-ra irtam ugyanugy ures ablakot eredmenyez
+
         static void Main(string[] args)
         {
             WindowOptions windowOptions = WindowOptions.Default;
@@ -56,13 +58,21 @@ namespace Szeminarium1
         {
             // egszeri beallitasokat
             //Console.WriteLine("Loaded");
-
+            
             Gl = graphicWindow.CreateOpenGL();
-
             Gl.ClearColor(System.Drawing.Color.White);
+
+
+            GLEnum err;
+            while ((err = Gl.GetError()) != GLEnum.NoError)
+            {
+                Console.WriteLine("Error in color settings");
+            }
 
             uint vshader = Gl.CreateShader(ShaderType.VertexShader);
             uint fshader = Gl.CreateShader(ShaderType.FragmentShader);
+
+
 
             Gl.ShaderSource(vshader, VertexShaderSource);
             Gl.CompileShader(vshader);
@@ -81,6 +91,11 @@ namespace Szeminarium1
             Gl.DetachShader(program, fshader);
             Gl.DeleteShader(vshader);
             Gl.DeleteShader(fshader);
+
+            while ((err = Gl.GetError()) != GLEnum.NoError)
+            {
+                Console.WriteLine("Error in shading");
+            }
 
             Gl.GetProgram(program, GLEnum.LinkStatus, out var status);
             if (status == 0)
@@ -135,7 +150,7 @@ namespace Szeminarium1
             Gl.BindBuffer(GLEnum.ArrayBuffer, colors);
             Gl.BufferData(GLEnum.ArrayBuffer, (ReadOnlySpan<float>)colorArray.AsSpan(), GLEnum.StaticDraw);
             Gl.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, 0, null);
-            Gl.EnableVertexAttribArray(1); // fekete lesz a haromszogem, valoszinuleg mert nem eri el a color-t ,hibas indexet adok at
+            Gl.EnableVertexAttribArray(1);
 
             uint indices = Gl.GenBuffer();
             Gl.BindBuffer(GLEnum.ElementArrayBuffer, indices);
