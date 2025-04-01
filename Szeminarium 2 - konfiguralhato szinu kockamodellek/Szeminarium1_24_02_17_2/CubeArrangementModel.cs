@@ -30,8 +30,6 @@
         internal void AdvanceTime(double deltaTime)
         {
             // we do not advance the simulation when animation is stopped
-            if (!AnimationEnabeld)
-                return;
 
             // set a simulation time
             Time += deltaTime;

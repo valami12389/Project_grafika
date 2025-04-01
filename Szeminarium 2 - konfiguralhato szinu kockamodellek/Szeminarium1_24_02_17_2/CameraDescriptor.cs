@@ -1,91 +1,83 @@
 ﻿using Silk.NET.Maths;
+using System.ComponentModel;
 
 namespace Szeminarium1_24_02_17_2
 {
     internal class CameraDescriptor
     {
-        private double DistanceToOrigin = 1;
+        private Vector3D<float> position = new(0, 0, 3);
+        private Vector3D<float> target = Vector3D<float>.Zero;
+        private Vector3D<float> up = new(0, 1, 0);
+        private float movementSpeed = 0.2f;
+        private const float rotationSpeed = (float)(Math.PI / 180 * 5);
 
-        private double AngleToZYPlane = 0;
+        public Vector3D<float> Position => position;
+        public Vector3D<float> Target => target;
+        public Vector3D<float> UpVector => up;
 
-        private double AngleToZXPlane = 0;
-
-        private const double DistanceScaleFactor = 1.1;
-
-        private const double AngleChangeStepSize = Math.PI / 180 * 5;
-
-        /// <summary>
-        /// Gets the position of the camera.
-        /// </summary>
-        public Vector3D<float> Position
+        private Vector3D<float> GetDirection()
         {
-            get
-            {
-                return GetPointFromAngles(DistanceToOrigin, AngleToZYPlane, AngleToZXPlane);
-            }
+            return Vector3D.Normalize(target - position);
         }
 
-        /// <summary>
-        /// Gets the up vector of the camera.
-        /// </summary>
-        public Vector3D<float> UpVector
+        private Vector3D<float> GetCrossDirection(Vector3D<float> direction)
         {
-            get
-            {
-                return Vector3D.Normalize(GetPointFromAngles(DistanceToOrigin, AngleToZYPlane, AngleToZXPlane + Math.PI / 2));
-            }
+            return Vector3D.Normalize(Vector3D.Cross(up, direction));
         }
 
-        /// <summary>
-        /// Gets the target point of the camera view.
-        /// </summary>
-        public Vector3D<float> Target
+        private void ApplyRotation(Vector3D<float> axis, float angle)
         {
-            get
-            {
-                // For the moment the camera is always pointed at the origin.
-                return Vector3D<float>.Zero;
-            }
+            var direction = GetDirection();
+            var rotation = Matrix4X4.CreateFromAxisAngle(axis, angle);
+            var newDirection = Vector3D.Transform(direction, rotation);
+            target = position + newDirection;
         }
 
-        public void IncreaseZXAngle()
+        public void MoveForward()
         {
-            AngleToZXPlane += AngleChangeStepSize;
+            var direction = GetDirection();
+            position += direction * movementSpeed;
+            target += direction * movementSpeed;
         }
 
-        public void DecreaseZXAngle()
+        public void MoveBackward()
         {
-            AngleToZXPlane -= AngleChangeStepSize;
+            var direction = GetDirection();
+            position -= direction * movementSpeed;
+            target -= direction * movementSpeed;
         }
 
-        public void IncreaseZYAngle()
+        public void MoveLeft()
         {
-            AngleToZYPlane += AngleChangeStepSize;
-
+            var direction = GetDirection();
+            var left = GetCrossDirection(direction);
+            position -= left * movementSpeed;
+            target -= left * movementSpeed;
         }
 
-        public void DecreaseZYAngle()
+        public void MoveRight()
         {
-            AngleToZYPlane -= AngleChangeStepSize;
+            var direction = GetDirection();
+            var right = GetCrossDirection(direction);
+            position += right * movementSpeed;
+            target += right * movementSpeed;
         }
 
-        public void IncreaseDistance()
+        public void MoveUp()
         {
-            DistanceToOrigin = DistanceToOrigin * DistanceScaleFactor;
+            position += up * movementSpeed;
+            target += up * movementSpeed;
         }
 
-        public void DecreaseDistance()
+        public void MoveDown()
         {
-            DistanceToOrigin = DistanceToOrigin / DistanceScaleFactor;
+            position -= up * movementSpeed;
+            target -= up * movementSpeed;
         }
 
-        private static Vector3D<float> GetPointFromAngles(double distanceToOrigin, double angleToMinZYPlane, double angleToMinZXPlane)
-        {
-            var x = distanceToOrigin * Math.Cos(angleToMinZXPlane) * Math.Sin(angleToMinZYPlane);
-            var z = distanceToOrigin * Math.Cos(angleToMinZXPlane) * Math.Cos(angleToMinZYPlane);
-            var y = distanceToOrigin * Math.Sin(angleToMinZXPlane);
-
-            return new Vector3D<float>((float)x, (float)y, (float)z);
-        }
+        public void TurnLeft() => ApplyRotation(up, -rotationSpeed);
+        public void TurnRight() => ApplyRotation(up, rotationSpeed);
+        public void LookUp() => ApplyRotation(GetCrossDirection(GetDirection()), -rotationSpeed);
+        public void LookDown() => ApplyRotation(GetCrossDirection(GetDirection()), rotationSpeed);
     }
 }

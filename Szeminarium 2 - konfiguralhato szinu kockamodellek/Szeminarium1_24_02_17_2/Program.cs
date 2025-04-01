@@ -21,6 +21,13 @@ namespace Szeminarium1_24_02_17_2
 
         private static GlCube glCubeRotating;
 
+        private static float targetRotation=0f;
+
+        private static bool isRotating = false;  
+        private static float currentRotationAngle = 0; 
+        private static float rotationSpeed = (float)(Math.PI / 100f);
+        private static bool rotationDirection;
+
         private const string ModelMatrixVariableName = "uModel";
         private const string ViewMatrixVariableName = "uView";
         private const string ProjectionMatrixVariableName = "uProjection";
@@ -62,7 +69,6 @@ namespace Szeminarium1_24_02_17_2
             windowOptions.Title = "2 szeminárium";
             windowOptions.Size = new Vector2D<int>(500, 500);
 
-            // on some systems there is no depth buffer by default, so we need to make sure one is created
             windowOptions.PreferredDepthBufferBits = 24;
 
             window = Window.Create(windowOptions);
@@ -77,9 +83,6 @@ namespace Szeminarium1_24_02_17_2
 
         private static void Window_Load()
         {
-            //Console.WriteLine("Load");
-
-            // set up input handling
             IInputContext inputContext = window.CreateInput();
             foreach (var keyboard in inputContext.Keyboards)
             {
@@ -132,45 +135,62 @@ namespace Szeminarium1_24_02_17_2
         {
             switch (key)
             {
-                case Key.Left:
-                    cameraDescriptor.DecreaseZYAngle();
+                case Key.W:
+                    cameraDescriptor.MoveForward();
                     break;
                     ;
-                case Key.Right:
-                    cameraDescriptor.IncreaseZYAngle();
+                case Key.S:
+                    cameraDescriptor.MoveBackward();
                     break;
-                case Key.Down:
-                    cameraDescriptor.IncreaseDistance();
-                    break;
-                case Key.Up:
-                    cameraDescriptor.DecreaseDistance();
-                    break;
-                case Key.U:
-                    cameraDescriptor.IncreaseZXAngle();
+                case Key.A:
+                    cameraDescriptor.MoveLeft();
                     break;
                 case Key.D:
-                    cameraDescriptor.DecreaseZXAngle();
+                    cameraDescriptor.MoveRight();
                     break;
-                /*case Key.Space:
-                    cubeArrangementModel.AnimationEnabeld = !cubeArrangementModel.AnimationEnabeld;
-                    break;*/
+                case Key.Space:
+                    cameraDescriptor.MoveUp();
+                    break;
+                case Key.Backspace:
+                    cameraDescriptor.MoveDown();
+                    break;
+                case Key.Left:
+                    cameraDescriptor.TurnLeft();
+                    break;
+                case Key.Right:
+                    cameraDescriptor.TurnRight();
+                    break;
+                case Key.R:
+                    Rotation(true);
+                    break;
+                case Key.L:
+                    Rotation(false);
+                    break;
+                
             }
         }
 
         private static void Window_Update(double deltaTime)
         {
-            //Console.WriteLine($"Update after {deltaTime} [s].");
-            // multithreaded
-            // make sure it is threadsafe
-            // NO GL calls
+
             cubeArrangementModel.AdvanceTime(deltaTime);
+            if (isRotating)
+            {
+                float step = rotationDirection ? rotationSpeed : -rotationSpeed;
+                currentRotationAngle += step;
+
+                if (Math.Abs(currentRotationAngle-targetRotation)<0.01f)
+                {
+                    currentRotationAngle = targetRotation;
+                    isRotating = false;
+                    ApplyFinalRotation();
+                }
+            }
         }
 
         private static unsafe void Window_Render(double deltaTime)
         {
-            //Console.WriteLine($"Render after {deltaTime} [s].");
 
-            // GL here
             Gl.Clear(ClearBufferMask.ColorBufferBit);
             Gl.Clear(ClearBufferMask.DepthBufferBit);
 
@@ -182,38 +202,31 @@ namespace Szeminarium1_24_02_17_2
 
             DrawRubikCube();
 
-            //DrawRevolvingCube();
 
         }
 
-       /* private static unsafe void DrawRevolvingCube()
-        {
-            Matrix4X4<float> diamondScale = Matrix4X4.CreateScale(0.25f);
-            Matrix4X4<float> rotx = Matrix4X4.CreateRotationX((float)Math.PI / 4f);
-            Matrix4X4<float> rotz = Matrix4X4.CreateRotationZ((float)Math.PI / 4f);
-            Matrix4X4<float> rotLocY = Matrix4X4.CreateRotationY((float)cubeArrangementModel.DiamondCubeAngleOwnRevolution);
-            Matrix4X4<float> trans = Matrix4X4.CreateTranslation(1f, 1f, 0f);
-            Matrix4X4<float> rotGlobY = Matrix4X4.CreateRotationY((float)cubeArrangementModel.DiamondCubeAngleRevolutionOnGlobalY);
-            Matrix4X4<float> modelMatrix = diamondScale * rotx * rotz * rotLocY * trans * rotGlobY;
-
-            SetModelMatrix(modelMatrix);
-            Gl.BindVertexArray(glCubeRotating.Vao);
-            Gl.DrawElements(GLEnum.Triangles, glCubeRotating.IndexArrayLength, GLEnum.UnsignedInt, null);
-            Gl.BindVertexArray(0);
-        }*/
 
         private static unsafe void DrawRubikCube()
         {
             float offset = 1.1f;
 
-            for (int x = 0; x < 3; x++) {
-                for (int y = 0; y < 3; y++) {
-                    for (int z = 0; z < 3; z++) {
+            for (int x = 0; x < 3; x++)
+            {
+                for (int y = 0; y < 3; y++)
+                {
+                    for (int z = 0; z < 3; z++)
+                    {
                         Matrix4X4<float> translation = Matrix4X4.CreateTranslation(
-                                (x-1)*offset,
-                                (y-1)*offset,
-                                (z-1)*offset
+                                (x - 1) * offset,
+                                (y - 1) * offset,
+                                (z - 1) * offset
                             );
+
+                        if ( z == 2) 
+                        {
+                            Matrix4X4<float> rotation = Matrix4X4.CreateRotationZ(currentRotationAngle);
+                            translation = translation * rotation; 
+                        }
                         SetModelMatrix(translation);
                         Gl.BindVertexArray(smallCubes[x, y, z].Vao);
                         Gl.DrawElements(GLEnum.Triangles, smallCubes[x, y, z].IndexArrayLength, GLEnum.UnsignedInt, null);
@@ -262,19 +275,11 @@ namespace Szeminarium1_24_02_17_2
                         if (y == 0) d = colors[6];
                         if (x == 2) r = colors[3];
                         if (x == 0) l = colors[4];
-                        smallCubes[x, y, z] = GlCube.CreateCubeWithFaceColors(Gl, u, f, l, d, b, r);
+                        smallCubes[x, y, z] = GlCube.CreateCubeWithFaceColors(Gl, u, f, l, d, b, r,new Vector3D<float>(x,y,z));
                     }
                 }
             }
 
-            /*face1Color = [0.5f, 0.0f, 0.0f, 1.0f];
-            face2Color = [0.0f, 0.5f, 0.0f, 1.0f];
-            face3Color = [0.0f, 0.0f, 0.5f, 1.0f];
-            face4Color = [0.5f, 0.0f, 0.5f, 1.0f];
-            face5Color = [0.0f, 0.5f, 0.5f, 1.0f];
-            face6Color = [0.5f, 0.5f, 0.0f, 1.0f];
-
-            glCubeRotating = GlCube.CreateCubeWithFaceColors(Gl, face1Color, face2Color, face3Color, face4Color, face5Color, face6Color);*/
         }
 
         
@@ -317,5 +322,37 @@ namespace Szeminarium1_24_02_17_2
             if (error != ErrorCode.NoError)
                 throw new Exception("GL.GetError() returned " + error.ToString());
         }
+
+        public static void Rotation(bool dir)
+        {
+            if (!isRotating) 
+            {
+                if (dir)
+                {
+                    targetRotation += (float)Math.PI / 2f;
+                }
+                else {
+                    targetRotation -= (float)Math.PI / 2f;
+                }
+                isRotating = true;
+                rotationDirection = dir;
+                rotationSpeed = (float)(Math.PI / 20);
+            }
+        }
+
+        public static void ApplyFinalRotation()
+        {
+
+            foreach (var cube in smallCubes) {
+                if (cube.Position.Z == 2) {
+                    float newX =  cube.Position.Y;
+                    float newY = 2-cube.Position.X;
+
+                    cube.Position = new Vector3D<float>(newX, newY, cube.Position.Z);
+                }
+            }
+        }
+
+
     }
 }

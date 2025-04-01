@@ -1,8 +1,10 @@
-﻿using Silk.NET.OpenGL;
+﻿using Silk.NET.Maths;
+using Silk.NET.OpenGL;
 using Silk.NET.Vulkan;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,10 +18,11 @@ namespace Szeminarium1_24_02_17_2
         public uint Colors { get; }
         public uint Indices { get; }
         public uint IndexArrayLength { get; }
+        public Vector3D<float> Position { get; set; }
 
         private GL Gl;
 
-        private GlCube(uint vao, uint vertices, uint colors, uint indeces, uint indexArrayLength, GL gl)
+        private GlCube(uint vao, uint vertices, uint colors, uint indeces, uint indexArrayLength, GL gl, Vector3D<float> position)
         {
             this.Vao = vao;
             this.Vertices = vertices;
@@ -27,12 +30,14 @@ namespace Szeminarium1_24_02_17_2
             this.Indices = indeces;
             this.IndexArrayLength = indexArrayLength;
             this.Gl = gl;
+            this.Position = position;
         }
 
-        public static unsafe GlCube CreateCubeWithFaceColors(GL Gl, float[] face1Color, float[] face2Color, float[] face3Color, float[] face4Color, float[] face5Color, float[] face6Color)
+        public static unsafe GlCube CreateCubeWithFaceColors(GL Gl, float[] face1Color, float[] face2Color, float[] face3Color, float[] face4Color, float[] face5Color, float[] face6Color, Vector3D<float> position)
         {
             uint vao = Gl.GenVertexArray();
             Gl.BindVertexArray(vao);
+            
 
             float[] vertexArray = new float[] {
                 -0.5f, 0.5f, 0.5f,
@@ -141,7 +146,7 @@ namespace Szeminarium1_24_02_17_2
             Gl.BindBuffer(GLEnum.ArrayBuffer, 0);
             uint indexArrayLength = (uint)indexArray.Length;
 
-            return new GlCube(vao, vertices, colors, indices, indexArrayLength, Gl);
+            return new GlCube(vao, vertices, colors, indices, indexArrayLength, Gl,position);
         }
 
         internal void ReleaseGlCube()
