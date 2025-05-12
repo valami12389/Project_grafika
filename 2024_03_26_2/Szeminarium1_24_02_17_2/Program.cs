@@ -270,39 +270,38 @@ namespace Szeminarium1_24_02_17_2
         {
             ImGui.Begin("Lighting Controls", ImGuiWindowFlags.AlwaysAutoResize);
 
-            ImGui.Text("Light Direction");
-            ImGui.DragFloat("Dir X", ref lightDirection.X, 0.01f, -1f, 1f);
-            ImGui.DragFloat("Dir Y", ref lightDirection.Y, 0.01f, -1f, 1f);
-            ImGui.DragFloat("Dir Z", ref lightDirection.Z, 0.01f, -1f, 1f);
+        ImGui.Text("Light Direction");
+        ImGui.DragFloat("Dir X", ref lightDirection.X, 0.01f, -1f, 1f);
+        ImGui.DragFloat("Dir Y", ref lightDirection.Y, 0.01f, -1f, 1f);
+        ImGui.DragFloat("Dir Z", ref lightDirection.Z, 0.01f, -1f, 1f);
+        
+        ImGui.SliderFloat("Intensity", ref lightIntensity, 0.1f, 2.0f);
+        
+        ImGui.ColorEdit3("Light Color", ref lightColor);
 
-            ImGui.SliderFloat("Light Intensity", ref lightIntensity, 0.1f, 3.0f);
+        ImGui.Separator();
+        ImGui.Text("Material Properties");
+        ImGui.SliderFloat("Shininess", ref Shininess, 1, 200);
+        ImGui.SliderFloat3("Ambient", ref ambientStrength, 0.0f, 0.5f); // Reduced max
+        ImGui.SliderFloat3("Diffuse", ref diffuseStrength, 0.0f, 1.0f);
+        ImGui.SliderFloat3("Specular", ref specularStrength, 0.0f, 1.0f);
 
-            ImGui.ColorEdit3("Light Color", ref lightColor);
-            ImGui.Separator();
-            ImGui.Text("Material Properties");
-            ImGui.SliderFloat("Shininess", ref Shininess, 1, 200);
-            ImGui.SliderFloat3("Ambient", ref ambientStrength, 0.0f, 0.5f); // Reduced max
-            ImGui.SliderFloat3("Diffuse", ref diffuseStrength, 0.0f, 1.0f);
-            ImGui.SliderFloat3("Specular", ref specularStrength, 0.0f, 1.0f);
+        if (ImGui.Button("Plastic"))
+        {
+            ambientStrength = new Vector3(0.1f, 0.1f, 0.1f);
+            diffuseStrength = new Vector3(0.6f, 0.6f, 0.6f);
+            specularStrength = new Vector3(0.8f, 0.8f, 0.8f);
+            Shininess = 32;
+        }
+        ImGui.SameLine();
+        if (ImGui.Button("Metal"))
+        {
+            ambientStrength = new Vector3(0.25f, 0.25f, 0.25f);
+            diffuseStrength = new Vector3(0.4f, 0.4f, 0.4f);
+            specularStrength = new Vector3(0.9f, 0.9f, 0.9f);
+            Shininess = 128;
+        }
 
-            if (ImGui.Button("Plastic"))
-            {
-                ambientStrength = new Vector3(0.1f, 0.1f, 0.1f);
-                diffuseStrength = new Vector3(0.6f, 0.6f, 0.6f);
-                specularStrength = new Vector3(0.8f, 0.8f, 0.8f);
-                Shininess = 32;
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Metal"))
-            {
-                ambientStrength = new Vector3(0.25f, 0.25f, 0.25f);
-                diffuseStrength = new Vector3(0.4f, 0.4f, 0.4f);
-                specularStrength = new Vector3(0.9f, 0.9f, 0.9f);
-                Shininess = 128;
-            }
-
-
-            // Rotation controls
             ImGui.Separator();
             ImGui.Text("Rotation Controls");
             if (ImGui.Button("Rotate Right (R)"))
@@ -445,15 +444,12 @@ namespace Szeminarium1_24_02_17_2
             CheckError();
         }
 
-
         private static unsafe void SetLightColor()
         {
             int location = Gl.GetUniformLocation(program, LightColorVariableName);
             if (location == -1)
                 throw new Exception($"{LightColorVariableName} uniform not found on shader.");
-            Gl.Uniform3(location, lightColor.X * lightIntensity,
-                              lightColor.Y * lightIntensity,
-                              lightColor.Z * lightIntensity);
+            Gl.Uniform3(location, lightColor.X, lightColor.Y, lightColor.Z);
             CheckError();
         }
 
