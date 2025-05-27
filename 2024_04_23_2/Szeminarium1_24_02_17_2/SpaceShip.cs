@@ -13,26 +13,26 @@ namespace Szeminarium1_24_02_17_2
         private const float TiltSpeed = 5f;
         private const float ReturnToCenterSpeed = 3f;
 
-        private bool isMovingLeft = false;
-        private bool isMovingRight = false;
-        private bool isMovingUp = false;
-        private bool isMovingDown = false;
+        public bool isMovingForward { get; set; } = false;
+        public bool isMovingBackward { get; set; } = false;
+        public bool isMovingLeft { get; set; } = false;
+        public bool isMovingRight { get; set; } = false;
+        public bool isMovingUp { get; set; } = false;
+        public bool isMovingDown { get; set; } = false;
 
         public void MoveForward(float deltaTime)
         {
-            Position += new Vector3D<float>(0, 0, -Speed * deltaTime); 
+            Position += new Vector3D<float>(0, 0, Speed * deltaTime);
         }
 
         public void MoveBackward(float deltaTime)
         {
-            Position += new Vector3D<float>(0, 0, Speed * deltaTime);
+            Position += new Vector3D<float>(0, 0, -Speed * deltaTime);
         }
 
         public void MoveLeft(float deltaTime)
         {
             Position += new Vector3D<float>(Speed * deltaTime, 0, 0);
-            isMovingRight = true;
-            isMovingLeft = false;
         }
 
         public void StopMovingUpDown()
@@ -50,26 +50,28 @@ namespace Szeminarium1_24_02_17_2
         public void MoveRight(float deltaTime)
         {
             Position += new Vector3D<float>(-Speed * deltaTime, 0, 0);
-            isMovingLeft = true;
-            isMovingRight = false;
         }
 
         public void MoveUp(float deltaTime)
         {
             Position += new Vector3D<float>(0, Speed * deltaTime, 0);
-            isMovingUp = true;
-            isMovingDown = false;
         }
 
         public void MoveDown(float deltaTime)
         {
             Position += new Vector3D<float>(0, -Speed * deltaTime, 0);
-            isMovingDown = true;
-            isMovingUp = false;
         }
 
         public void Update(float deltaTime)
         {
+
+            if (isMovingForward) MoveForward(deltaTime);
+            if (isMovingBackward) MoveBackward(deltaTime);
+            if (isMovingLeft) MoveLeft(deltaTime);
+            if (isMovingRight) MoveRight(deltaTime);
+            if (isMovingUp) MoveUp(deltaTime);
+            if (isMovingDown) MoveDown(deltaTime);
+
             if (isMovingLeft)
             {
                 PitchAngle = Math.Min(PitchAngle + TiltSpeed * deltaTime, MaxTiltAngle);

@@ -142,22 +142,22 @@ namespace Szeminarium1_24_02_17_2
             switch (key)
             {
                 case Key.Left:
-                    spaceship.MoveLeft(0.1f);
+                    spaceship.isMovingLeft = true;
                     break;
                 case Key.Right:
-                    spaceship.MoveRight(0.1f);
+                    spaceship.isMovingRight = true;
                     break;
                 case Key.Up:
-                    spaceship.MoveForward(0.1f);
+                    spaceship.isMovingForward = true;
                     break;
                 case Key.Down:
-                    spaceship.MoveBackward(0.1f);
+                    spaceship.isMovingBackward = true;
                     break;
                 case Key.U:
-                    spaceship.MoveUp(0.1f);
+                    spaceship.isMovingUp = true;
                     break;
                 case Key.D:
-                    spaceship.MoveDown(0.1f);
+                    spaceship.isMovingDown = true;
                     break;
                 case Key.Space:
                     cubeArrangementModel.AnimationEnabeld = !cubeArrangementModel.AnimationEnabeld;
@@ -170,11 +170,25 @@ namespace Szeminarium1_24_02_17_2
             switch (key)
             {
                 case Key.Left:
-                case Key.Right:
+                    spaceship.isMovingLeft = false;
                     spaceship.StopMovingLeftRight();
                     break;
+                case Key.Right:
+                    spaceship.isMovingRight = false;
+                    spaceship.StopMovingLeftRight();
+                    break;
+                case Key.Up:
+                    spaceship.isMovingForward = false;
+                    break;
+                case Key.Down:
+                    spaceship.isMovingBackward = false;
+                    break;
                 case Key.U:
+                    spaceship.isMovingUp = false;
+                    spaceship.StopMovingUpDown();
+                    break;
                 case Key.D:
+                    spaceship.isMovingDown = false;
                     spaceship.StopMovingUpDown();
                     break;
             }
