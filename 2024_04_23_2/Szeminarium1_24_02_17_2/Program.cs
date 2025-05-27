@@ -23,7 +23,7 @@ namespace Szeminarium1_24_02_17_2
 
         private static uint program;
 
-        private static GlObject teapot;
+        private static GlObject spaceshipmodell;
 
         private static GlObject table;
 
@@ -75,6 +75,7 @@ namespace Szeminarium1_24_02_17_2
             foreach (var keyboard in inputContext.Keyboards)
             {
                 keyboard.KeyDown += Keyboard_KeyDown;
+                keyboard.KeyUp += Keyboard_KeyUp;
             }
 
             Gl = window.CreateOpenGL();
@@ -163,6 +164,21 @@ namespace Szeminarium1_24_02_17_2
                     break;
             }
         }
+
+        private static void Keyboard_KeyUp(IKeyboard keyboard, Key key, int arg3)
+        {
+            switch (key)
+            {
+                case Key.Left:
+                case Key.Right:
+                    spaceship.StopMovingLeftRight();
+                    break;
+                case Key.U:
+                case Key.D:
+                    spaceship.StopMovingUpDown();
+                    break;
+            }
+        }
         private static unsafe void DrawAsteroids()
         {
             foreach (var asteroid in asteroids)
@@ -184,6 +200,8 @@ namespace Szeminarium1_24_02_17_2
         private static void Window_Update(double deltaTime)
         {
             cubeArrangementModel.AdvanceTime(deltaTime);
+
+            spaceship.Update((float)deltaTime);
 
             for (int i = asteroids.Count - 1; i >= 0; i--)
             {
@@ -212,17 +230,14 @@ namespace Szeminarium1_24_02_17_2
 
             Vector3D<float> playerPosition = cameraDescriptor.Position;
 
-            // Start at the edge of the skybox (400 is the skybox scale)
             var position = new Vector3D<float>(
                 (float)(Random.Shared.NextDouble() * 400),
                 (float)(Random.Shared.NextDouble() * 400),
-                -400f
+                spaceship.Position.Z - 300
             );
 
-            // Random scale between 0.5 and 3.0
             float scale = (float)(Random.Shared.NextDouble() * 2.5 + 0.5);
 
-            // Random speed between 1 and 5
             float speed = (float)(Random.Shared.NextDouble() * 20 + 1);
 
             var asteroidObj = ObjResourceReader.CreateAsteroidWithColor(Gl, asteroidColor);
@@ -247,7 +262,7 @@ namespace Szeminarium1_24_02_17_2
             SetViewerPosition();
             SetShininess();
 
-            DrawPulsingTeapot();
+            DrawPulsingSpaceShip();
 
             DrawRevolvingCube();
 
@@ -359,13 +374,17 @@ namespace Szeminarium1_24_02_17_2
             Gl.BindVertexArray(0);
         }
 
-        private static unsafe void DrawPulsingTeapot()
+        private static unsafe void DrawPulsingSpaceShip()
         {
-            var modelMatrix = Matrix4X4.CreateScale((float)cubeArrangementModel.CenterCubeScale) *
-                      Matrix4X4.CreateTranslation(spaceship.Position);
+            var scale = Matrix4X4.CreateScale((float)cubeArrangementModel.CenterCubeScale);
+            var rotationX = Matrix4X4.CreateRotationX(spaceship.RollAngle);
+            var rotationZ = Matrix4X4.CreateRotationZ(spaceship.PitchAngle);
+            var translation = Matrix4X4.CreateTranslation(spaceship.Position);
+
+            var modelMatrix = scale * rotationX * rotationZ * translation;
             SetModelMatrix(modelMatrix);
-            Gl.BindVertexArray(teapot.Vao);
-            Gl.DrawElements(GLEnum.Triangles, teapot.IndexArrayLength, GLEnum.UnsignedInt, null);
+            Gl.BindVertexArray(spaceshipmodell.Vao);
+            Gl.DrawElements(GLEnum.Triangles, spaceshipmodell.IndexArrayLength, GLEnum.UnsignedInt, null);
             Gl.BindVertexArray(0);
         }
 
@@ -425,7 +444,7 @@ namespace Szeminarium1_24_02_17_2
                 asteroids.Add(new Asteroid(asteroidObj, position, scale, speed, initialCameraPosition));
             }
 
-            teapot = ObjResourceReader.CreateSpaceshipWithColor(Gl, face1Color);
+            spaceshipmodell = ObjResourceReader.CreateSpaceshipWithColor(Gl, face1Color);
 
             float[] tableColor = [System.Drawing.Color.Azure.R/256f,
                           System.Drawing.Color.Azure.G/256f,
@@ -448,7 +467,7 @@ namespace Szeminarium1_24_02_17_2
                 asteroid.GlObject.ReleaseGlObject();
             }
             asteroids.Clear();
-            teapot.ReleaseGlObject();
+            spaceshipmodell.ReleaseGlObject();
             glCubeRotating.ReleaseGlObject();
         }
 
