@@ -22,7 +22,39 @@ namespace Szeminarium1_24_02_17_2
             List<float> glColors = new List<float>();
             List<uint> glIndices = new List<uint>();
 
-            CreateGlArraysForAsteroidObj(faceColor, objVertices, objNormals, objFaces, glVertices, glColors, glIndices);
+            Dictionary<string, uint> vertexCache = new Dictionary<string, uint>();
+            uint indexCounter = 0;
+
+            foreach (var face in objFaces)
+            {
+                foreach (var v in face)
+                {
+                    int vIdx = v[0] - 1;
+                    int vnIdx = v[2] >= 0 ? v[2] - 1 : 0; 
+
+                    string key = $"{vIdx}//{vnIdx}";
+
+                    if (!vertexCache.TryGetValue(key, out uint glIndex))
+                    {
+                        glVertices.AddRange(objVertices[vIdx]);
+
+                        glVertices.AddRange(objNormals[vnIdx]);
+
+                        float[] vert = objVertices[vIdx];
+                        Vector3D<float> pos = new Vector3D<float>(vert[0], vert[1], vert[2]);
+                        float u = 0.5f + (float)(Math.Atan2(pos.Z, pos.X) / (2 * MathF.PI));
+                        float v2 = 0.5f - (float)(Math.Asin(pos.Y / pos.Length) / MathF.PI);
+                        glVertices.Add(u);
+                        glVertices.Add(v2);
+
+                        glColors.AddRange(faceColor);
+
+                        vertexCache[key] = indexCounter++;
+                    }
+
+                    glIndices.Add(vertexCache[key]);
+                }
+            }
 
             return CreateOpenGlObject(Gl, vao, glVertices, glColors, glIndices);
         }
@@ -68,12 +100,12 @@ namespace Szeminarium1_24_02_17_2
                             case "f":
                                 int[][] face = parts.Skip(1).Select(part =>
                                 {
-                                    var indices = part.Split("//");
+                                    var indices = part.Split('/');
                                     return new int[]
                                     {
-                                int.Parse(indices[0]), // vertex index
-                                -1,                    // texture index (missing)
-                                int.Parse(indices[1])  // normal index
+                                        int.Parse(indices[0]),
+                                        indices.Length > 1 && !string.IsNullOrEmpty(indices[1]) ? int.Parse(indices[1]) : -1, 
+                                        indices.Length > 2 ? int.Parse(indices[2]) : -1
                                     };
                                 }).ToArray();
                                 objFaces.Add(face);
@@ -84,46 +116,6 @@ namespace Szeminarium1_24_02_17_2
             }
         }
 
-        private static void CreateGlArraysForAsteroidObj(float[] faceColor,
-            List<float[]> objVertices,
-            List<float[]> objNormals,
-            List<int[][]> objFaces,
-            List<float> glVertices,
-            List<float> glColors,
-            List<uint> glIndices)
-        {
-            Dictionary<string, uint> vertexCache = new Dictionary<string, uint>();
-
-            foreach (var face in objFaces)
-            {
-                foreach (var v in face)
-                {
-                    int vIdx = v[0] - 1;
-                    int vnIdx = v[2] - 1;
-
-                    string key = $"{vIdx}//{vnIdx}";
-
-                    if (!vertexCache.ContainsKey(key))
-                    {
-                        // pozíció
-                        glVertices.AddRange(objVertices[vIdx]);
-
-                        // normál
-                        glVertices.AddRange(objNormals[vnIdx]);
-
-                        // dummy UV
-                        glVertices.AddRange(new float[] { 0f, 0f });
-
-                        // szín
-                        glColors.AddRange(faceColor);
-
-                        vertexCache[key] = (uint)vertexCache.Count;
-                    }
-
-                    glIndices.Add(vertexCache[key]);
-                }
-            }
-        }
 
         public static unsafe GlObject CreateSpaceshipWithColor(GL Gl, float[] faceColor)
         {

@@ -413,14 +413,14 @@ namespace Szeminarium1_24_02_17_2
             Gl.UniformMatrix4(location, 1, false, (float*)&modelMatrix);
             CheckError();
 
-            var modelMatrixWithoutTranslation = new Matrix4X4<float>(modelMatrix.Row1, modelMatrix.Row2, modelMatrix.Row3, modelMatrix.Row4);
-            modelMatrixWithoutTranslation.M41 = 0;
-            modelMatrixWithoutTranslation.M42 = 0;
-            modelMatrixWithoutTranslation.M43 = 0;
-            modelMatrixWithoutTranslation.M44 = 1;
+            Matrix4X4<float> modelMatrixWithoutTranslation = new Matrix4X4<float>(
+                 modelMatrix.M11, modelMatrix.M12, modelMatrix.M13, 0,
+                 modelMatrix.M21, modelMatrix.M22, modelMatrix.M23, 0,
+                 modelMatrix.M31, modelMatrix.M32, modelMatrix.M33, 0,
+                 0, 0, 0, 1
+             );
 
-            Matrix4X4<float> modelInvers;
-            Matrix4X4.Invert<float>(modelMatrixWithoutTranslation, out modelInvers);
+            Matrix4X4.Invert(modelMatrixWithoutTranslation, out var modelInvers);
             Matrix3X3<float> normalMatrix = new Matrix3X3<float>(Matrix4X4.Transpose(modelInvers));
             location = Gl.GetUniformLocation(program, NormalMatrixVariableName);
             if (location == -1)
