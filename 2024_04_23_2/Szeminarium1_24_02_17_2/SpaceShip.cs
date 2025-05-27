@@ -7,9 +7,9 @@ namespace Szeminarium1_24_02_17_2
         public Vector3D<float> Position { get; set; } = Vector3D<float>.Zero;
         public float Speed { get; set; } = 10.0f;
 
-        public float RollAngle { get; private set; } = 0.0f;   
-        public float PitchAngle { get; private set; } = 0.0f;  
-        private const float MaxTiltAngle = MathF.PI / 6f; 
+        public float RollAngle { get; private set; } = 0.0f;
+        public float PitchAngle { get; private set; } = 0.0f;
+        private const float MaxTiltAngle = MathF.PI / 6f;
         private const float TiltSpeed = 5f;
         private const float ReturnToCenterSpeed = 3f;
 
@@ -19,6 +19,17 @@ namespace Szeminarium1_24_02_17_2
         public bool isMovingRight { get; set; } = false;
         public bool isMovingUp { get; set; } = false;
         public bool isMovingDown { get; set; } = false;
+
+        public float MaxHealth { get; } = 100f;
+        public float CurrentHealth { get; private set; }
+        public bool IsAlive => CurrentHealth > 0;
+        public float invulnerabilityTimer { get; set; } = 0f;
+        public  float InvulnerabilityDuration { get; set; } = 1f;
+
+        public Spaceship()
+        {
+            CurrentHealth = MaxHealth;
+        }
 
         public void MoveForward(float deltaTime)
         {
@@ -33,6 +44,16 @@ namespace Szeminarium1_24_02_17_2
         public void MoveLeft(float deltaTime)
         {
             Position += new Vector3D<float>(Speed * deltaTime, 0, 0);
+        }
+
+        public void TakeDamage(float damage)
+        {
+            if (invulnerabilityTimer > 0) return;
+
+            CurrentHealth = Math.Max(0, CurrentHealth - damage);
+            invulnerabilityTimer = InvulnerabilityDuration;
+
+            Console.WriteLine($"Damage taken! Health: {CurrentHealth}");
         }
 
         public void StopMovingUpDown()
@@ -71,6 +92,13 @@ namespace Szeminarium1_24_02_17_2
             if (isMovingRight) MoveRight(deltaTime);
             if (isMovingUp) MoveUp(deltaTime);
             if (isMovingDown) MoveDown(deltaTime);
+
+            if (invulnerabilityTimer > 0)
+            {
+                invulnerabilityTimer -= deltaTime;
+                if (invulnerabilityTimer < 0)
+                    invulnerabilityTimer = 0;
+            }
 
             if (isMovingLeft)
             {

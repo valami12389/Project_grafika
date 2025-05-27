@@ -32,7 +32,7 @@ namespace Szeminarium1_24_02_17_2
         private static GlCube skyBox;
 
         private static Spaceship spaceship = new Spaceship();
-        private static Vector3D<float> cameraOffset = new Vector3D<float>(0, -5, 20);
+        private static Vector3D<float> cameraOffset = new Vector3D<float>(0, -25, 60);
 
         private static float Shininess = 50;
         private static List<Asteroid> asteroids = new List<Asteroid>();
@@ -214,22 +214,46 @@ namespace Szeminarium1_24_02_17_2
         private static void Window_Update(double deltaTime)
         {
             cubeArrangementModel.AdvanceTime(deltaTime);
-
             spaceship.Update((float)deltaTime);
+
+
+            Console.WriteLine($"Frame update - Health: {spaceship.CurrentHealth}, Invuln: {spaceship.invulnerabilityTimer}");
+
+            List<Asteroid> asteroidsToRemove = new List<Asteroid>();
+            foreach (var asteroid in asteroids)
+            {
+
+                asteroid.Direction = Vector3D.Normalize(spaceship.Position - asteroid.Position);
+                asteroid.Position += asteroid.Direction * asteroid.Speed * (float)deltaTime;
+                asteroid.RotationAngle += 0.01f;
+
+                float distance = Vector3D.Distance(spaceship.Position, asteroid.Position);
+                float asteroidRadius = asteroid.Scale * 0.7f; 
+                float spaceshipRadius = (float)(cubeArrangementModel.CenterCubeScale * 0.35f); 
+                double collisionDistance = asteroidRadius + spaceshipRadius;
+                
+
+
+                if (distance < (float)collisionDistance && !asteroid.HasCausedDamage)
+                {
+                    asteroid.HasCausedDamage = true;
+                    spaceship.TakeDamage(10f);
+                    asteroidsToRemove.Add(asteroid);
+                }
+            }
+
+            foreach (var asteroid in asteroidsToRemove)
+            {
+                asteroid.GlObject.ReleaseGlObject();
+                asteroids.Remove(asteroid);
+                AddNewAsteroid();
+            }
 
             for (int i = asteroids.Count - 1; i >= 0; i--)
             {
-                var asteroid = asteroids[i];
-
-                asteroid.Direction = Vector3D.Normalize(spaceship.Position - asteroid.Position);
-
-                asteroid.Position += asteroid.Direction * asteroid.Speed * (float)deltaTime;
-
-                asteroid.RotationAngle += 0.01f;
-
-                if (asteroid.Position.Z > 200f)
+                if (asteroids[i].Position.Z > 200f)
                 {
-                    asteroid.GlObject.ReleaseGlObject();
+                    asteroids[i].GlObject.ReleaseGlObject();
                     asteroids.RemoveAt(i);
                     AddNewAsteroid();
                 }
@@ -282,10 +306,30 @@ namespace Szeminarium1_24_02_17_2
 
             DrawSkyBox();
 
-            ImGuiNET.ImGui.Begin("Lighting properties",
-                ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
-            ImGuiNET.ImGui.SliderFloat("Shininess", ref Shininess, 1, 200);
-            ImGuiNET.ImGui.End();
+            ImGuiNET.ImGui.Begin("Health Status",ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
+            ImGuiNET.ImGui.SetWindowPos(new System.Numerics.Vector2(10, 10));
+            ImGuiNET.ImGui.SetWindowSize(new System.Numerics.Vector2(200, 50));
+
+            float healthPercentage = spaceship.CurrentHealth / spaceship.MaxHealth;
+            System.Numerics.Vector4 healthColor = healthPercentage > 0.6f ?
+                new System.Numerics.Vector4(0, 1, 0, 1) :
+                healthPercentage > 0.3f ?
+                new System.Numerics.Vector4(1, 1, 0, 1) :
+                new System.Numerics.Vector4(1, 0, 0, 1);
+
+            ImGuiNET.ImGui.Text("Spaceship Health:");
+            ImGuiNET.ImGui.PushStyleColor(ImGuiCol.PlotHistogram, healthColor);
+            ImGuiNET.ImGui.ProgressBar(healthPercentage,
+                new System.Numerics.Vector2(180, 20),
+                $"{spaceship.CurrentHealth}/{spaceship.MaxHealth}");
+            ImGuiNET.ImGui.PopStyleColor();
+
+            ImGuiNET.ImGui.Text("Spaceship Health:");
+            ImGuiNET.ImGui.PushStyleColor(ImGuiCol.PlotHistogram, healthColor);
+            ImGuiNET.ImGui.ProgressBar(healthPercentage,
+                new System.Numerics.Vector2(180, 20),
+                $"{spaceship.CurrentHealth}/{spaceship.MaxHealth}");
+            ImGuiNET.ImGui.PopStyleColor();
 
 
             controller.Render();
@@ -390,6 +434,12 @@ namespace Szeminarium1_24_02_17_2
 
         private static unsafe void DrawPulsingSpaceShip()
         {
+
+            if (spaceship.invulnerabilityTimer > 0 && (int)(spaceship.invulnerabilityTimer * 10) % 2 == 0)
+            {
+                Gl.Uniform4(Gl.GetUniformLocation(program, "uColor"), 1f, 0.5f, 0.5f, 1f); 
+            }
+
             var scale = Matrix4X4.CreateScale((float)cubeArrangementModel.CenterCubeScale);
             var rotationX = Matrix4X4.CreateRotationX(spaceship.RollAngle);
             var rotationZ = Matrix4X4.CreateRotationZ(spaceship.PitchAngle);
@@ -400,6 +450,8 @@ namespace Szeminarium1_24_02_17_2
             Gl.BindVertexArray(spaceshipmodell.Vao);
             Gl.DrawElements(GLEnum.Triangles, spaceshipmodell.IndexArrayLength, GLEnum.UnsignedInt, null);
             Gl.BindVertexArray(0);
+
+            Gl.Uniform4(Gl.GetUniformLocation(program, "uColor"), 1f, 1f, 1f, 1f);
         }
 
         private static unsafe void SetModelMatrix(Matrix4X4<float> modelMatrix)
