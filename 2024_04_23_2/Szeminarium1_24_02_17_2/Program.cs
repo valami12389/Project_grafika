@@ -31,6 +31,9 @@ namespace Szeminarium1_24_02_17_2
 
         private static GlCube skyBox;
 
+        private static Spaceship spaceship = new Spaceship();
+        private static Vector3D<float> cameraOffset = new Vector3D<float>(0, -5, 20);
+
         private static float Shininess = 50;
         private static List<Asteroid> asteroids = new List<Asteroid>();
 
@@ -68,9 +71,6 @@ namespace Szeminarium1_24_02_17_2
 
         private static void Window_Load()
         {
-            //Console.WriteLine("Load");
-
-            // set up input handling
             inputContext = window.CreateInput();
             foreach (var keyboard in inputContext.Keyboards)
             {
@@ -95,7 +95,6 @@ namespace Szeminarium1_24_02_17_2
 
             LinkProgram();
 
-           //Gl.Enable(EnableCap.CullFace);
 
             Gl.Enable(EnableCap.DepthTest);
             Gl.DepthFunc(DepthFunction.Lequal);
@@ -142,23 +141,22 @@ namespace Szeminarium1_24_02_17_2
             switch (key)
             {
                 case Key.Left:
-                    cameraDescriptor.DecreaseZYAngle();
+                    spaceship.MoveLeft(0.1f);
                     break;
-                    ;
                 case Key.Right:
-                    cameraDescriptor.IncreaseZYAngle();
-                    break;
-                case Key.Down:
-                    cameraDescriptor.IncreaseDistance();
+                    spaceship.MoveRight(0.1f);
                     break;
                 case Key.Up:
-                    cameraDescriptor.DecreaseDistance();
+                    spaceship.MoveForward(0.1f);
+                    break;
+                case Key.Down:
+                    spaceship.MoveBackward(0.1f);
                     break;
                 case Key.U:
-                    cameraDescriptor.IncreaseZXAngle();
+                    spaceship.MoveUp(0.1f);
                     break;
                 case Key.D:
-                    cameraDescriptor.DecreaseZXAngle();
+                    spaceship.MoveDown(0.1f);
                     break;
                 case Key.Space:
                     cubeArrangementModel.AnimationEnabeld = !cubeArrangementModel.AnimationEnabeld;
@@ -185,27 +183,22 @@ namespace Szeminarium1_24_02_17_2
 
         private static void Window_Update(double deltaTime)
         {
-            //Console.WriteLine($"Update after {deltaTime} [s].");
-            // multithreaded
-            // make sure it is threadsafe
-            // NO GL calls
             cubeArrangementModel.AdvanceTime(deltaTime);
 
             for (int i = asteroids.Count - 1; i >= 0; i--)
             {
                 var asteroid = asteroids[i];
 
+                asteroid.Direction = Vector3D.Normalize(spaceship.Position - asteroid.Position);
+
                 asteroid.Position += asteroid.Direction * asteroid.Speed * (float)deltaTime;
 
                 asteroid.RotationAngle += 0.01f;
-                if (asteroid.RotationAngle > Math.PI * 2)
-                    asteroid.RotationAngle -= (float)(Math.PI * 2);
 
-                if (asteroid.Position.Z > 0)
+                if (asteroid.Position.Z > 200f)
                 {
                     asteroid.GlObject.ReleaseGlObject();
                     asteroids.RemoveAt(i);
-
                     AddNewAsteroid();
                 }
             }
@@ -217,10 +210,12 @@ namespace Szeminarium1_24_02_17_2
         {
             float[] asteroidColor = [0.85f, 0.85f, 0.85f, 1.0f];
 
+            Vector3D<float> playerPosition = cameraDescriptor.Position;
+
             // Start at the edge of the skybox (400 is the skybox scale)
             var position = new Vector3D<float>(
-                (float)(Random.Shared.NextDouble() * 400 - 200),
-                (float)(Random.Shared.NextDouble() * 400 - 200),
+                (float)(Random.Shared.NextDouble() * 400),
+                (float)(Random.Shared.NextDouble() * 400),
                 -400f
             );
 
@@ -228,17 +223,14 @@ namespace Szeminarium1_24_02_17_2
             float scale = (float)(Random.Shared.NextDouble() * 2.5 + 0.5);
 
             // Random speed between 1 and 5
-            float speed = (float)(Random.Shared.NextDouble() * 4 + 1);
+            float speed = (float)(Random.Shared.NextDouble() * 20 + 1);
 
             var asteroidObj = ObjResourceReader.CreateAsteroidWithColor(Gl, asteroidColor);
-            asteroids.Add(new Asteroid(asteroidObj, position, scale,speed));
+            asteroids.Add(new Asteroid(asteroidObj, position, scale,speed,spaceship.Position));
         }
 
         private static unsafe void Window_Render(double deltaTime)
         {
-            //Console.WriteLine($"Render after {deltaTime} [s].");
-
-            // GL here
 
             Gl.Clear(ClearBufferMask.ColorBufferBit);
             Gl.Clear(ClearBufferMask.DepthBufferBit);
@@ -261,7 +253,6 @@ namespace Szeminarium1_24_02_17_2
 
             DrawSkyBox();
 
-            //ImGuiNET.ImGui.ShowDemoWindow();
             ImGuiNET.ImGui.Begin("Lighting properties",
                 ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar);
             ImGuiNET.ImGui.SliderFloat("Shininess", ref Shininess, 1, 200);
@@ -370,19 +361,12 @@ namespace Szeminarium1_24_02_17_2
 
         private static unsafe void DrawPulsingTeapot()
         {
-            // set material uniform to rubber
-
-            var modelMatrixForCenterCube = Matrix4X4.CreateScale((float)cubeArrangementModel.CenterCubeScale);
-            SetModelMatrix(modelMatrixForCenterCube);
+            var modelMatrix = Matrix4X4.CreateScale((float)cubeArrangementModel.CenterCubeScale) *
+                      Matrix4X4.CreateTranslation(spaceship.Position);
+            SetModelMatrix(modelMatrix);
             Gl.BindVertexArray(teapot.Vao);
             Gl.DrawElements(GLEnum.Triangles, teapot.IndexArrayLength, GLEnum.UnsignedInt, null);
             Gl.BindVertexArray(0);
-
-            //var modelMatrixForTable = Matrix4X4.CreateScale(1f, 1f, 1f);
-            //SetModelMatrix(modelMatrixForTable);
-            //Gl.BindVertexArray(table.Vao);
-            //Gl.DrawElements(GLEnum.Triangles, table.IndexArrayLength, GLEnum.UnsignedInt, null);
-            //Gl.BindVertexArray(0);
         }
 
         private static unsafe void SetModelMatrix(Matrix4X4<float> modelMatrix)
@@ -424,23 +408,21 @@ namespace Szeminarium1_24_02_17_2
             float[] face5Color = [0.0f, 1.0f, 1.0f, 1.0f];
             float[] face6Color = [1.0f, 1.0f, 0.0f, 1.0f];
 
-           
-            for (int i = 0; i < 10; i++)
+            Vector3D<float> initialCameraPosition = cameraDescriptor.Position;
+
+            for (int i = 0; i < 100; i++)
             {
-                
                 var position = new Vector3D<float>(
-                    (float)(Random.Shared.NextDouble() * 400 - 200), 
-                    (float)(Random.Shared.NextDouble() * 400 - 200), 
-                    -400f
+                    (float)(Random.Shared.NextDouble() * 400) ,
+                    (float)(Random.Shared.NextDouble() * 400),
+                    (float)(Random.Shared.NextDouble() * 400)
                 );
-             
 
                 float scale = (float)(Random.Shared.NextDouble() * 2.5 + 0.5);
-
-                float speed = (float)(Random.Shared.NextDouble() * 4 + 1);
+                float speed = (float)(Random.Shared.NextDouble() * 20 + 1);
 
                 var asteroidObj = ObjResourceReader.CreateAsteroidWithColor(Gl, asteroidColor);
-                asteroids.Add(new Asteroid(asteroidObj, position, scale, speed));
+                asteroids.Add(new Asteroid(asteroidObj, position, scale, speed, initialCameraPosition));
             }
 
             teapot = ObjResourceReader.CreateSpaceshipWithColor(Gl, face1Color);
@@ -486,7 +468,9 @@ namespace Szeminarium1_24_02_17_2
 
         private static unsafe void SetViewMatrix()
         {
-            var viewMatrix = Matrix4X4.CreateLookAt(cameraDescriptor.Position, cameraDescriptor.Target, cameraDescriptor.UpVector);
+
+            var cameraPosition = spaceship.Position - cameraOffset;
+            var viewMatrix = Matrix4X4.CreateLookAt(cameraPosition, spaceship.Position, Vector3D<float>.UnitY);
             int location = Gl.GetUniformLocation(program, ViewMatrixVariableName);
 
             if (location == -1)

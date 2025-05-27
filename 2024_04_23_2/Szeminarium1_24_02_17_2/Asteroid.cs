@@ -14,20 +14,18 @@ namespace Szeminarium1_24_02_17_2
         public float Scale { get; }
         public Vector3D<float> RotationAxis { get; }
         public float RotationAngle { get; set; }
-        public Vector3D<float> Direction { get; } 
-        public float Speed { get; } 
+        public Vector3D<float> Direction { get; set; }
+        public float Speed { get; }
 
-        public Asteroid(GlObject glObject, Vector3D<float> position, float scale, float speed)
+        public Asteroid(GlObject glObject, Vector3D<float> position, float scale, float speed, Vector3D<float> spaceshipPosition)
         {
             GlObject = glObject;
             Position = position;
             Scale = scale;
-            RotationAxis = new Vector3D<float>(
-                (float)Random.Shared.NextDouble(),
-                (float)Random.Shared.NextDouble(),
-                (float)Random.Shared.NextDouble());
+            RotationAxis = new Vector3D<float>(1f, 0f, 0f);
+
             RotationAngle = 0;
-            Direction = new Vector3D<float>(0, 0, 1);
+            Direction = Vector3D.Normalize(spaceshipPosition - position);
             Speed = speed;
         }
     }
