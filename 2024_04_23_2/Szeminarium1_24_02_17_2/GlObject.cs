@@ -2,7 +2,7 @@
 
 namespace Szeminarium1_24_02_17_2
 {
-    internal class GlObject
+    public class GlObject
     {
         public uint Vao { get; }
         public uint Vertices { get; }

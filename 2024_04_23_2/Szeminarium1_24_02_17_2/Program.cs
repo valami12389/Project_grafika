@@ -32,6 +32,7 @@ namespace Szeminarium1_24_02_17_2
         private static GlCube skyBox;
 
         private static float Shininess = 50;
+        private static List<Asteroid> asteroids = new List<Asteroid>();
 
         private const string ModelMatrixVariableName = "uModel";
         private const string NormalMatrixVariableName = "uNormal";
@@ -164,6 +165,23 @@ namespace Szeminarium1_24_02_17_2
                     break;
             }
         }
+        private static unsafe void DrawAsteroids()
+        {
+            foreach (var asteroid in asteroids)
+            {
+                // Create transformation matrix
+                Matrix4X4<float> scale = Matrix4X4.CreateScale(asteroid.Scale);
+                Matrix4X4<float> rotation = Matrix4X4.CreateFromAxisAngle(asteroid.RotationAxis, asteroid.RotationAngle);
+                Matrix4X4<float> translation = Matrix4X4.CreateTranslation(asteroid.Position);
+
+                Matrix4X4<float> modelMatrix = scale * rotation * translation;
+                SetModelMatrix(modelMatrix);
+
+                Gl.BindVertexArray(asteroid.GlObject.Vao);
+                Gl.DrawElements(GLEnum.Triangles, asteroid.GlObject.IndexArrayLength, GLEnum.UnsignedInt, null);
+                Gl.BindVertexArray(0);
+            }
+        }
 
         private static void Window_Update(double deltaTime)
         {
@@ -173,7 +191,47 @@ namespace Szeminarium1_24_02_17_2
             // NO GL calls
             cubeArrangementModel.AdvanceTime(deltaTime);
 
+            for (int i = asteroids.Count - 1; i >= 0; i--)
+            {
+                var asteroid = asteroids[i];
+
+                asteroid.Position += asteroid.Direction * asteroid.Speed * (float)deltaTime;
+
+                asteroid.RotationAngle += 0.01f;
+                if (asteroid.RotationAngle > Math.PI * 2)
+                    asteroid.RotationAngle -= (float)(Math.PI * 2);
+
+                if (asteroid.Position.Z > 0)
+                {
+                    asteroid.GlObject.ReleaseGlObject();
+                    asteroids.RemoveAt(i);
+
+                    AddNewAsteroid();
+                }
+            }
+
             controller.Update((float)deltaTime);
+        }
+
+        private static void AddNewAsteroid()
+        {
+            float[] asteroidColor = [0.85f, 0.85f, 0.85f, 1.0f];
+
+            // Start at the edge of the skybox (400 is the skybox scale)
+            var position = new Vector3D<float>(
+                (float)(Random.Shared.NextDouble() * 400 - 200),
+                (float)(Random.Shared.NextDouble() * 400 - 200),
+                -400f
+            );
+
+            // Random scale between 0.5 and 3.0
+            float scale = (float)(Random.Shared.NextDouble() * 2.5 + 0.5);
+
+            // Random speed between 1 and 5
+            float speed = (float)(Random.Shared.NextDouble() * 4 + 1);
+
+            var asteroidObj = ObjResourceReader.CreateAsteroidWithColor(Gl, asteroidColor);
+            asteroids.Add(new Asteroid(asteroidObj, position, scale,speed));
         }
 
         private static unsafe void Window_Render(double deltaTime)
@@ -181,6 +239,7 @@ namespace Szeminarium1_24_02_17_2
             //Console.WriteLine($"Render after {deltaTime} [s].");
 
             // GL here
+
             Gl.Clear(ClearBufferMask.ColorBufferBit);
             Gl.Clear(ClearBufferMask.DepthBufferBit);
 
@@ -189,6 +248,7 @@ namespace Szeminarium1_24_02_17_2
 
             SetViewMatrix();
             SetProjectionMatrix();
+            DrawAsteroids();
 
             SetLightColor();
             SetLightPosition();
@@ -356,7 +416,7 @@ namespace Szeminarium1_24_02_17_2
 
         private static unsafe void SetUpObjects()
         {
-
+            float[] asteroidColor = [0.85f, 0.85f, 0.85f, 1.0f];
             float[] face1Color = [1f, 0f, 0f, 1.0f];
             float[] face2Color = [0.0f, 1.0f, 0.0f, 1.0f];
             float[] face3Color = [0.0f, 0.0f, 1.0f, 1.0f];
@@ -364,23 +424,48 @@ namespace Szeminarium1_24_02_17_2
             float[] face5Color = [0.0f, 1.0f, 1.0f, 1.0f];
             float[] face6Color = [1.0f, 1.0f, 0.0f, 1.0f];
 
+           
+            for (int i = 0; i < 10; i++)
+            {
+                
+                var position = new Vector3D<float>(
+                    (float)(Random.Shared.NextDouble() * 400 - 200), 
+                    (float)(Random.Shared.NextDouble() * 400 - 200), 
+                    -400f
+                );
+             
+
+                float scale = (float)(Random.Shared.NextDouble() * 2.5 + 0.5);
+
+                float speed = (float)(Random.Shared.NextDouble() * 4 + 1);
+
+                var asteroidObj = ObjResourceReader.CreateAsteroidWithColor(Gl, asteroidColor);
+                asteroids.Add(new Asteroid(asteroidObj, position, scale, speed));
+            }
+
             teapot = ObjResourceReader.CreateSpaceshipWithColor(Gl, face1Color);
 
             float[] tableColor = [System.Drawing.Color.Azure.R/256f,
-                                  System.Drawing.Color.Azure.G/256f,
-                                  System.Drawing.Color.Azure.B/256f,
-                                  1f];
+                          System.Drawing.Color.Azure.G/256f,
+                          System.Drawing.Color.Azure.B/256f,
+                          1f];
             table = GlCube.CreateSquare(Gl, tableColor);
 
-            glCubeRotating = GlCube.CreateCubeWithFaceColors(Gl, face1Color, face2Color, face3Color, face4Color, face5Color, face6Color);
+            glCubeRotating = GlCube.CreateCubeWithFaceColors(Gl, face1Color, face2Color, face3Color,
+                                                            face4Color, face5Color, face6Color);
 
             skyBox = GlCube.CreateInteriorCube(Gl, "");
         }
 
-        
+
 
         private static void Window_Closing()
         {
+            foreach (var asteroid in asteroids)
+            {
+                asteroid.GlObject.ReleaseGlObject();
+            }
+            asteroids.Clear();
             teapot.ReleaseGlObject();
             glCubeRotating.ReleaseGlObject();
         }

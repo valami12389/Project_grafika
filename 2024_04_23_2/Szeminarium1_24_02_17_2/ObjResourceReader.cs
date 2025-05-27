@@ -7,6 +7,124 @@ namespace Szeminarium1_24_02_17_2
 {
     internal class ObjResourceReader
     {
+
+        public static unsafe GlObject CreateAsteroidWithColor(GL Gl, float[] faceColor)
+        {
+            uint vao = Gl.GenVertexArray();
+            Gl.BindVertexArray(vao);
+
+            List<float[]> objVertices;
+            List<float[]> objNormals;
+            List<int[][]> objFaces;
+            ReadObjDataForAsteroid(out objVertices, out objNormals, out objFaces);
+
+            List<float> glVertices = new List<float>();
+            List<float> glColors = new List<float>();
+            List<uint> glIndices = new List<uint>();
+
+            CreateGlArraysForAsteroidObj(faceColor, objVertices, objNormals, objFaces, glVertices, glColors, glIndices);
+
+            return CreateOpenGlObject(Gl, vao, glVertices, glColors, glIndices);
+        }
+
+        private static unsafe void ReadObjDataForAsteroid(
+            out List<float[]> objVertices,
+            out List<float[]> objNormals,
+            out List<int[][]> objFaces)
+        {
+            objVertices = new List<float[]>();
+            objNormals = new List<float[]>();
+            objFaces = new List<int[][]>();
+
+            var assembly = Assembly.GetExecutingAssembly();
+            string resourceName = "Szeminarium1_24_02_17_2.Resources.asteroid.obj";
+
+            using (Stream objStream = assembly.GetManifestResourceStream(resourceName))
+            {
+                if (objStream == null)
+                    throw new FileNotFoundException($"Resource '{resourceName}' not found.");
+
+                using (StreamReader objReader = new StreamReader(objStream))
+                {
+                    while (!objReader.EndOfStream)
+                    {
+                        var line = objReader.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
+                            continue;
+
+                        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+                        switch (parts[0])
+                        {
+                            case "v":
+                                objVertices.Add(parts.Skip(1).Select(p => float.Parse(p, CultureInfo.InvariantCulture)).ToArray());
+                                break;
+
+                            case "vn":
+                                objNormals.Add(parts.Skip(1).Select(p => float.Parse(p, CultureInfo.InvariantCulture)).ToArray());
+                                break;
+
+                            case "f":
+                                int[][] face = parts.Skip(1).Select(part =>
+                                {
+                                    var indices = part.Split("//");
+                                    return new int[]
+                                    {
+                                int.Parse(indices[0]), // vertex index
+                                -1,                    // texture index (missing)
+                                int.Parse(indices[1])  // normal index
+                                    };
+                                }).ToArray();
+                                objFaces.Add(face);
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void CreateGlArraysForAsteroidObj(float[] faceColor,
+            List<float[]> objVertices,
+            List<float[]> objNormals,
+            List<int[][]> objFaces,
+            List<float> glVertices,
+            List<float> glColors,
+            List<uint> glIndices)
+        {
+            Dictionary<string, uint> vertexCache = new Dictionary<string, uint>();
+
+            foreach (var face in objFaces)
+            {
+                foreach (var v in face)
+                {
+                    int vIdx = v[0] - 1;
+                    int vnIdx = v[2] - 1;
+
+                    string key = $"{vIdx}//{vnIdx}";
+
+                    if (!vertexCache.ContainsKey(key))
+                    {
+                        // pozíció
+                        glVertices.AddRange(objVertices[vIdx]);
+
+                        // normál
+                        glVertices.AddRange(objNormals[vnIdx]);
+
+                        // dummy UV
+                        glVertices.AddRange(new float[] { 0f, 0f });
+
+                        // szín
+                        glColors.AddRange(faceColor);
+
+                        vertexCache[key] = (uint)vertexCache.Count;
+                    }
+
+                    glIndices.Add(vertexCache[key]);
+                }
+            }
+        }
+
         public static unsafe GlObject CreateSpaceshipWithColor(GL Gl, float[] faceColor)
         {
             uint vao = Gl.GenVertexArray();

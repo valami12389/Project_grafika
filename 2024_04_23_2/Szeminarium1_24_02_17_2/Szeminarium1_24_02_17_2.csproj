@@ -9,7 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\asteroid.obj" />
     <None Remove="Resources\skybox.png" />
+    <None Remove="Resources\skyboxstar.jpg" />
     <None Remove="Resources\spaceship.obj" />
     <None Remove="Resources\teapot.obj" />
     <None Remove="Shaders\FragmentShader.frag" />
@@ -17,7 +19,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\asteroid.obj" />
     <EmbeddedResource Include="Resources\skybox.png" />
+    <EmbeddedResource Include="Resources\skyboxstar.jpg" />
     <EmbeddedResource Include="Resources\spaceship.obj" />
     <EmbeddedResource Include="Resources\teapot.obj" />
     <EmbeddedResource Include="Shaders\FragmentShader.frag" />
