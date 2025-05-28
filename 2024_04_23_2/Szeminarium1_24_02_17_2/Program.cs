@@ -32,7 +32,7 @@ namespace Szeminarium1_24_02_17_2
         private static GlCube skyBox;
 
         private static Spaceship spaceship = new Spaceship();
-        private static Vector3D<float> cameraOffset = new Vector3D<float>(0, -25, 60);
+        private static Vector3D<float> cameraOffset = new Vector3D<float>(0, -5, 40);
 
         private static float Shininess = 50;
         private static List<Asteroid> asteroids = new List<Asteroid>();
@@ -227,17 +227,13 @@ namespace Szeminarium1_24_02_17_2
                 asteroid.Position += asteroid.Direction * asteroid.Speed * (float)deltaTime;
                 asteroid.RotationAngle += 0.01f;
 
-                float distance = Vector3D.Distance(spaceship.Position, asteroid.Position);
-                float asteroidRadius = asteroid.Scale * 0.7f; 
-                float spaceshipRadius = (float)(cubeArrangementModel.CenterCubeScale * 0.35f); 
-                double collisionDistance = asteroidRadius + spaceshipRadius;
-                
-
-
-                if (distance < (float)collisionDistance && !asteroid.HasCausedDamage)
+                if (!asteroid.HasCausedDamage && CheckCollisionAdjustable(spaceship, asteroid))
                 {
                     asteroid.HasCausedDamage = true;
                     spaceship.TakeDamage(10f);
+                    Vector3D<float> knockbackDirection = Vector3D.Normalize(spaceship.Position - asteroid.Position);
+                    float knockbackForce = 200.0f;
+                    spaceship.ApplyKnockback(knockbackDirection, knockbackForce);
                     asteroidsToRemove.Add(asteroid);
                 }
             }
@@ -276,7 +272,7 @@ namespace Szeminarium1_24_02_17_2
 
             float scale = (float)(Random.Shared.NextDouble() * 2.5 + 0.5);
 
-            float speed = (float)(Random.Shared.NextDouble() * 20 + 1);
+            float speed = (float)(Random.Shared.NextDouble() * 10 + 1);
 
             var asteroidObj = ObjResourceReader.CreateAsteroidWithColor(Gl, asteroidColor);
             asteroids.Add(new Asteroid(asteroidObj, position, scale,speed,spaceship.Position));
@@ -301,8 +297,6 @@ namespace Szeminarium1_24_02_17_2
             SetShininess();
 
             DrawPulsingSpaceShip();
-
-            DrawRevolvingCube();
 
             DrawSkyBox();
 
@@ -414,23 +408,6 @@ namespace Szeminarium1_24_02_17_2
             CheckError();
         }
 
-        private static unsafe void DrawRevolvingCube()
-        {
-            // set material uniform to metal
-
-            Matrix4X4<float> diamondScale = Matrix4X4.CreateScale(1f);
-            Matrix4X4<float> rotx = Matrix4X4.CreateRotationX((float)Math.PI / 4f);
-            Matrix4X4<float> rotz = Matrix4X4.CreateRotationZ((float)Math.PI / 4f);
-            Matrix4X4<float> rotLocY = Matrix4X4.CreateRotationY((float)cubeArrangementModel.DiamondCubeAngleOwnRevolution);
-            Matrix4X4<float> trans = Matrix4X4.CreateTranslation(4f, 4f, 0f);
-            Matrix4X4<float> rotGlobY = Matrix4X4.CreateRotationY((float)cubeArrangementModel.DiamondCubeAngleRevolutionOnGlobalY);
-            Matrix4X4<float> modelMatrix = diamondScale * rotx * rotz * rotLocY * trans * rotGlobY;
-
-            SetModelMatrix(modelMatrix);
-            Gl.BindVertexArray(glCubeRotating.Vao);
-            Gl.DrawElements(GLEnum.Triangles, glCubeRotating.IndexArrayLength, GLEnum.UnsignedInt, null);
-            Gl.BindVertexArray(0);
-        }
 
         private static unsafe void DrawPulsingSpaceShip()
         {
@@ -504,7 +481,7 @@ namespace Szeminarium1_24_02_17_2
                 );
 
                 float scale = (float)(Random.Shared.NextDouble() * 2.5 + 0.5);
-                float speed = (float)(Random.Shared.NextDouble() * 20 + 1);
+                float speed = (float)(Random.Shared.NextDouble() * 10 + 1);
 
                 var asteroidObj = ObjResourceReader.CreateAsteroidWithColor(Gl, asteroidColor);
                 asteroids.Add(new Asteroid(asteroidObj, position, scale, speed, initialCameraPosition));
@@ -549,6 +526,19 @@ namespace Szeminarium1_24_02_17_2
 
             Gl.UniformMatrix4(location, 1, false, (float*)&projectionMatrix);
             CheckError();
+        }
+
+        private static bool CheckCollisionAdjustable(Spaceship spaceship, Asteroid asteroid)
+        {
+            const float SPACESHIP_COLLISION_SCALE = 0.25f; 
+            const float ASTEROID_COLLISION_SCALE = 0.7f;  
+            const float DISTANCE_MULTIPLIER = 0.8f;       
+
+            var distance = Vector3D.Distance(spaceship.Position, asteroid.Position);
+            var maxAllowedDistance = (spaceship.BoundingBoxSize.X * SPACESHIP_COLLISION_SCALE +
+                                     asteroid.Scale * ASTEROID_COLLISION_SCALE) * DISTANCE_MULTIPLIER;
+
+            return distance < maxAllowedDistance;
         }
 
         private static unsafe void SetViewMatrix()

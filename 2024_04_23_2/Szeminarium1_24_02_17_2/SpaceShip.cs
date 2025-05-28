@@ -4,11 +4,16 @@ namespace Szeminarium1_24_02_17_2
 {
     public class Spaceship
     {
+
+        public Vector3D<float> KnockbackVelocity { get; set; } = Vector3D<float>.Zero;
+        public float KnockbackDecay { get; set; } = 5.0f; 
+        public bool IsBeingKnockedBack { get; set; } = false;
         public Vector3D<float> Position { get; set; } = Vector3D<float>.Zero;
         public float Speed { get; set; } = 10.0f;
 
         public float RollAngle { get; private set; } = 0.0f;
         public float PitchAngle { get; private set; } = 0.0f;
+        public Vector3D<float> BoundingBoxSize { get; } = new Vector3D<float>(5f, 5f, 10f);
         private const float MaxTiltAngle = MathF.PI / 6f;
         private const float TiltSpeed = 5f;
         private const float ReturnToCenterSpeed = 3f;
@@ -25,6 +30,12 @@ namespace Szeminarium1_24_02_17_2
         public bool IsAlive => CurrentHealth > 0;
         public float invulnerabilityTimer { get; set; } = 0f;
         public  float InvulnerabilityDuration { get; set; } = 1f;
+
+        public void ApplyKnockback(Vector3D<float> knockbackDirection, float knockbackForce)
+        {
+            KnockbackVelocity = knockbackDirection * knockbackForce;
+            IsBeingKnockedBack = true;
+        }
 
         public Spaceship()
         {
@@ -100,31 +111,47 @@ namespace Szeminarium1_24_02_17_2
                     invulnerabilityTimer = 0;
             }
 
-            if (isMovingLeft)
+            if (IsBeingKnockedBack)
             {
-                PitchAngle = Math.Min(PitchAngle + TiltSpeed * deltaTime, MaxTiltAngle);
+                Position += KnockbackVelocity * deltaTime;
+
+                KnockbackVelocity *= (1.0f - KnockbackDecay * deltaTime);
+
+                if (KnockbackVelocity.Length < 0.1f)
+                {
+                    KnockbackVelocity = Vector3D<float>.Zero;
+                    IsBeingKnockedBack = false;
+                }
             }
-            else if (isMovingRight)
+
+            if (!IsBeingKnockedBack)
             {
-                PitchAngle = Math.Max(PitchAngle - TiltSpeed * deltaTime, -MaxTiltAngle);
-            }
-            else
-            {
-                RollAngle = SmoothDamp(RollAngle, 0, ReturnToCenterSpeed * deltaTime);
-            }
-            if (isMovingUp)
-            {
-                RollAngle = Math.Max(RollAngle - TiltSpeed * deltaTime, -MaxTiltAngle);
-               
-            }
-            else if (isMovingDown)
-            {
-                RollAngle = Math.Min(RollAngle + TiltSpeed * deltaTime, MaxTiltAngle);
-                
-            }
-            else
-            {
-                PitchAngle = SmoothDamp(PitchAngle, 0, ReturnToCenterSpeed * deltaTime);
+                if (isMovingLeft)
+                {
+                    PitchAngle = Math.Min(PitchAngle + TiltSpeed * deltaTime, MaxTiltAngle);
+                }
+                else if (isMovingRight)
+                {
+                    PitchAngle = Math.Max(PitchAngle - TiltSpeed * deltaTime, -MaxTiltAngle);
+                }
+                else
+                {
+                    RollAngle = SmoothDamp(RollAngle, 0, ReturnToCenterSpeed * deltaTime);
+                }
+                if (isMovingUp)
+                {
+                    RollAngle = Math.Max(RollAngle - TiltSpeed * deltaTime, -MaxTiltAngle);
+
+                }
+                else if (isMovingDown)
+                {
+                    RollAngle = Math.Min(RollAngle + TiltSpeed * deltaTime, MaxTiltAngle);
+
+                }
+                else
+                {
+                    PitchAngle = SmoothDamp(PitchAngle, 0, ReturnToCenterSpeed * deltaTime);
+                }
             }
         }
 

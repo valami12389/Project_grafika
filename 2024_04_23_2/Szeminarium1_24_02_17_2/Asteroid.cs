@@ -17,6 +17,7 @@ namespace Szeminarium1_24_02_17_2
         public Vector3D<float> Direction { get; set; }
         public bool HasCausedDamage { get; set; } = false;
         public float Speed { get; }
+        public Vector3D<float> BoundingBoxSize => new Vector3D<float>(Scale, Scale, Scale);
 
         public Asteroid(GlObject glObject, Vector3D<float> position, float scale, float speed, Vector3D<float> spaceshipPosition)
         {
