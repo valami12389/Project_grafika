@@ -32,7 +32,6 @@ namespace Szeminarium1_24_02_17_2
         private static GlCube skyBox;
 
         private static Spaceship spaceship = new Spaceship();
-        private static Vector3D<float> cameraOffset = new Vector3D<float>(0, -5, 40);
 
         private static float Shininess = 50;
         private static List<Asteroid> asteroids = new List<Asteroid>();
@@ -72,6 +71,7 @@ namespace Szeminarium1_24_02_17_2
         private static void Window_Load()
         {
             inputContext = window.CreateInput();
+            cameraDescriptor = new CameraDescriptor(spaceship);
             foreach (var keyboard in inputContext.Keyboards)
             {
                 keyboard.KeyDown += Keyboard_KeyDown;
@@ -161,6 +161,9 @@ namespace Szeminarium1_24_02_17_2
                     break;
                 case Key.Space:
                     cubeArrangementModel.AnimationEnabeld = !cubeArrangementModel.AnimationEnabeld;
+                    break;
+                case Key.C: 
+                    cameraDescriptor.ToggleCameraMode();
                     break;
             }
         }
@@ -407,27 +410,30 @@ namespace Szeminarium1_24_02_17_2
             Gl.Uniform1(location, Shininess);
             CheckError();
         }
-
-
         private static unsafe void DrawPulsingSpaceShip()
         {
-
             if (spaceship.invulnerabilityTimer > 0 && (int)(spaceship.invulnerabilityTimer * 10) % 2 == 0)
             {
-                Gl.Uniform4(Gl.GetUniformLocation(program, "uColor"), 1f, 0.5f, 0.5f, 1f); 
+                Gl.Uniform4(Gl.GetUniformLocation(program, "uColor"), 1f, 0.5f, 0.5f, 1f);
             }
 
             var scale = Matrix4X4.CreateScale((float)cubeArrangementModel.CenterCubeScale);
             var rotationX = Matrix4X4.CreateRotationX(spaceship.RollAngle);
             var rotationZ = Matrix4X4.CreateRotationZ(spaceship.PitchAngle);
             var translation = Matrix4X4.CreateTranslation(spaceship.Position);
-
             var modelMatrix = scale * rotationX * rotationZ * translation;
             SetModelMatrix(modelMatrix);
+
+            Gl.Enable(EnableCap.DepthTest);
+            Gl.Enable(EnableCap.CullFace);
+            Gl.CullFace(GLEnum.Back);
+
+            Gl.Uniform4(Gl.GetUniformLocation(program, "uMaterial"), 1f, 1f, 1f, 1f);
             Gl.BindVertexArray(spaceshipmodell.Vao);
             Gl.DrawElements(GLEnum.Triangles, spaceshipmodell.IndexArrayLength, GLEnum.UnsignedInt, null);
-            Gl.BindVertexArray(0);
 
+            Gl.Disable(EnableCap.CullFace);
+            Gl.BindVertexArray(0);
             Gl.Uniform4(Gl.GetUniformLocation(program, "uColor"), 1f, 1f, 1f, 1f);
         }
 
@@ -543,11 +549,13 @@ namespace Szeminarium1_24_02_17_2
 
         private static unsafe void SetViewMatrix()
         {
+            Matrix4X4<float> viewMatrix = Matrix4X4.CreateLookAt(
+                cameraDescriptor.Position,
+                cameraDescriptor.Target,
+                cameraDescriptor.UpVector
+            );
 
-            var cameraPosition = spaceship.Position - cameraOffset;
-            var viewMatrix = Matrix4X4.CreateLookAt(cameraPosition, spaceship.Position, Vector3D<float>.UnitY);
             int location = Gl.GetUniformLocation(program, ViewMatrixVariableName);
-
             if (location == -1)
             {
                 throw new Exception($"{ViewMatrixVariableName} uniform not found on shader.");
