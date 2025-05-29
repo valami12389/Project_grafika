@@ -3,7 +3,7 @@
 namespace Szeminarium1_24_02_17_2
 {
     public enum CameraMode
-    { 
+    {
         External,
         Cockpit
     }
@@ -19,7 +19,7 @@ namespace Szeminarium1_24_02_17_2
 
         private const double AngleChangeStepSize = Math.PI / 180 * 5;
 
-        private Vector3D<float> externalOffset = new Vector3D<float>(0, -5, 40);
+        private Vector3D<float> externalOffset = new Vector3D<float>(0, 15, -40);
 
         public CameraMode CurrentMode { get; set; } = CameraMode.External;
         private Spaceship targetSpaceship;
@@ -51,11 +51,8 @@ namespace Szeminarium1_24_02_17_2
                 }
                 else if (targetSpaceship != null)
                 {
-                    var rotationMatrix = Matrix4X4.CreateRotationX(targetSpaceship.RollAngle) *
-                                       Matrix4X4.CreateRotationZ(targetSpaceship.PitchAngle);
 
-                    var transformedOffset = Vector3D.Transform(externalOffset, rotationMatrix);
-                    return targetSpaceship.Position + transformedOffset;
+                    return targetSpaceship.Position + new Vector3D<float>(0, 15, -40);
                 }
                 else
                 {
@@ -69,7 +66,7 @@ namespace Szeminarium1_24_02_17_2
             get
             {
                 if (CurrentMode == CameraMode.Cockpit && targetSpaceship != null)
-                {    
+                {
                     return Vector3D<float>.UnitY;
                 }
                 else

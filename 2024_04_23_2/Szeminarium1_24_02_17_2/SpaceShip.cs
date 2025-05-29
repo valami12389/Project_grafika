@@ -9,7 +9,7 @@ namespace Szeminarium1_24_02_17_2
         public float KnockbackDecay { get; set; } = 5.0f; 
         public bool IsBeingKnockedBack { get; set; } = false;
         public Vector3D<float> Position { get; set; } = Vector3D<float>.Zero;
-        public float Speed { get; set; } = 10.0f;
+        public float Speed { get; set; } = 50.0f;
 
         public float RollAngle { get; private set; } = 0.0f;
         public float PitchAngle { get; private set; } = 0.0f;

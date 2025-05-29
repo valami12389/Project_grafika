@@ -4,6 +4,7 @@ uniform vec3 lightColor;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform float shininess;
+uniform bool isSkybox;
 
 uniform sampler2D uTexture;
 
@@ -16,25 +17,34 @@ in vec2 outTex;
 
 void main()
 {
-    float ambientStrength = 0.2;
-    vec3 ambient = ambientStrength * lightColor;
+    if (isSkybox) {
+        vec4 textColor = texture(uTexture, outTex);
+        FragColor = textColor * 5.0;
+    }
+    else {
+        float ambientStrength = 0.4;
+        vec3 ambient = ambientStrength * lightColor;
 
-    float diffuseStrength = 0.3;
-    vec3 norm = normalize(outNormal);
-    vec3 lightDir = normalize(lightPos - outWorldPosition);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * lightColor * diffuseStrength;
+        float diffuseStrength = 0.8;
+        vec3 norm = normalize(outNormal);
+        vec3 lightDir = normalize(lightPos - outWorldPosition);
+        float diff = max(dot(norm, lightDir), 0.0);
+        vec3 diffuse = diff * lightColor * diffuseStrength;
 
-    float specularStrength = 0.5;
-    vec3 viewDir = normalize(viewPos - outWorldPosition);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess) / max(dot(norm,viewDir), -dot(norm,lightDir));
-    vec3 specular = specularStrength * spec * lightColor;  
+        float specularStrength = 1.0;
+        vec3 viewDir = normalize(viewPos - outWorldPosition);
+        vec3 reflectDir = reflect(-lightDir, norm);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess) / max(dot(norm,viewDir), -dot(norm,lightDir));
+        vec3 specular = specularStrength * spec * lightColor; 
+        
+        float emission = 0.2;
+        vec3 emissionColor = outCol.xyz * emission;
 
-    vec3 result = (ambient + diffuse + specular) * outCol.xyz;
+        vec3 result = (ambient + diffuse + specular + emissionColor) * outCol.xyz;
 
-    // textrure color
-    vec4 textColor = texture(uTexture, outTex);
+        // textrure color
+        vec4 textColor = texture(uTexture, outTex)*1.5;
 
-    FragColor = vec4(result, outCol.w) + vec4(textColor);
+        FragColor = vec4(result, outCol.w) + vec4(textColor);
+    }
 }

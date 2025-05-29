@@ -206,41 +206,41 @@ namespace Szeminarium1_24_02_17_2
             // counter clockwise is front facing
             float[] vertexArray = new float[] {
                 // top face
-                -0.5f, 0.5f, 0.5f, 0f, -1f, 0f, 1f/4f, 0f/3f,
-                0.5f, 0.5f, 0.5f, 0f, -1f, 0f, 2f/4f, 0f/3f,
-                0.5f, 0.5f, -0.5f, 0f, -1f, 0f, 2f/4f, 1f/3f,
-                -0.5f, 0.5f, -0.5f, 0f, -1f, 0f, 1f/4f, 1f/3f,
+                -1.0f, 1.0f, 1.0f, 0f, -1f, 0f, 1f/4f, 0f/3f,
+                1.0f, 1.0f, 1.0f, 0f, -1f, 0f, 2f/4f, 0f/3f,
+                1.0f, 1.0f, -1.0f, 0f, -1f, 0f, 2f/4f, 1f/3f,
+                -1.0f, 1.0f, -1.0f, 0f, -1f, 0f, 1f/4f, 1f/3f,
 
                 // front face
-                -0.5f, 0.5f, 0.5f, 0f, 0f, -1f, 1, 1f/3f,
-                -0.5f, -0.5f, 0.5f, 0f, 0f, -1f, 4f/4f, 2f/3f,
-                0.5f, -0.5f, 0.5f, 0f, 0f, -1f, 3f/4f, 2f/3f,
-                0.5f, 0.5f, 0.5f, 0f, 0f, -1f,  3f/4f, 1f/3f,
+                -1.0f, 1.0f, 1.0f, 0f, 0f, -1f, 1, 1f/3f,
+                -1.0f, -1.0f, 1.0f, 0f, 0f, -1f, 4f/4f, 2f/3f,
+                1.0f, -1.0f, 1.0f, 0f, 0f, -1f, 3f/4f, 2f/3f,
+                1.0f, 1.0f, 1.0f, 0f, 0f, -1f,  3f/4f, 1f/3f,
 
                 // left face
-                -0.5f, 0.5f, 0.5f, 1f, 0f, 0f, 0, 1f/3f,
-                -0.5f, 0.5f, -0.5f, 1f, 0f, 0f,1f/4f, 1f/3f,
-                -0.5f, -0.5f, -0.5f, 1f, 0f, 0f, 1f/4f, 2f/3f,
-                -0.5f, -0.5f, 0.5f, 1f, 0f, 0f, 0f/4f, 2f/3f,
+                -1.0f, 1.0f, 1.0f, 1f, 0f, 0f, 0, 1f/3f,
+                -1.0f, 1.0f, -1.0f, 1f, 0f, 0f,1f/4f, 1f/3f,
+                -1.0f, -1.0f, -1.0f, 1f, 0f, 0f, 1f/4f, 2f/3f,
+                -1.0f, -1.0f, 1.0f, 1f, 0f, 0f, 0f/4f, 2f/3f,
 
                 // bottom face
-                -0.5f, -0.5f, 0.5f, 0f, 1f, 0f, 1f/4f, 1f,
-                0.5f, -0.5f, 0.5f,0f, 1f, 0f, 2f/4f, 1f,
-                0.5f, -0.5f, -0.5f,0f, 1f, 0f, 2f/4f, 2f/3f,
-                -0.5f, -0.5f, -0.5f,0f, 1f, 0f, 1f/4f, 2f/3f,
+                -1.0f, -1.0f, 1.0f, 0f, 1f, 0f, 1f/4f, 1f,
+                1.0f, -1.0f, 1.0f,0f, 1f, 0f, 2f/4f, 1f,
+                1.0f, -1.0f, -1.0f,0f, 1f, 0f, 2f/4f, 2f/3f,
+                -1.0f, -1.0f, -1.0f,0f, 1f, 0f, 1f/4f, 2f/3f,
 
                 // back face
-                0.5f, 0.5f, -0.5f, 0f, 0f, 1f, 2f/4f, 1f/3f,
-                -0.5f, 0.5f, -0.5f, 0f, 0f, 1f, 1f/4f, 1f/3f,
-                -0.5f, -0.5f, -0.5f,0f, 0f, 1f, 1f/4f, 2f/3f,
-                0.5f, -0.5f, -0.5f,0f, 0f, 1f, 2f/4f, 2f/3f,
+                1.0f, 1.0f, -1.0f, 0f, 0f, 1f, 2f/4f, 1f/3f,
+                -1.0f, 1.0f, -1.0f, 0f, 0f, 1f, 1f/4f, 1f/3f,
+                -1.0f, -1.0f, -1.0f,0f, 0f, 1f, 1f/4f, 2f/3f,
+                1.0f, -1.0f, -1.0f,0f, 0f, 1f, 2f/4f, 2f/3f,
 
                 // right face
-                0.5f, 0.5f, 0.5f, -1f, 0f, 0f, 3f/4f, 1f/3f,
-                0.5f, 0.5f, -0.5f,-1f, 0f, 0f, 2f/4f, 1f/3f,
-                0.5f, -0.5f, -0.5f, -1f, 0f, 0f, 2f/4f, 2f/3f,
-                0.5f, -0.5f, 0.5f, -1f, 0f, 0f, 3f/4f, 2f/3f,
-            };
+                1.0f, 1.0f, 1.0f, -1f, 0f, 0f, 3f/4f, 1f/3f,
+                1.0f, 1.0f, -1.0f,-1f, 0f, 0f, 2f/4f, 1f/3f,
+                1.0f, -1.0f, -1.0f, -1f, 0f, 0f, 2f/4f, 2f/3f,
+                1.0f, -1.0f, 1.0f, -1f, 0f, 0f, 3f/4f, 2f/3f,
+            }; 
 
             uint[] indexArray = new uint[] {
                 0, 2, 1,
@@ -290,16 +290,17 @@ namespace Szeminarium1_24_02_17_2
             // bind texture
             Gl.BindTexture(TextureTarget.Texture2D, texture);
 
-            var skyboxImageResult = ReadTextureImage("skybox.png");
+            var skyboxImageResult = ReadTextureImage("skyboxstar.jpg");
             var textureBytes = (ReadOnlySpan<byte>)skyboxImageResult.Data.AsSpan();
             // Here we use "result.Width" and "result.Height" to tell OpenGL about how big our texture is.
             Gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba, (uint)skyboxImageResult.Width,
                 (uint)skyboxImageResult.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, textureBytes);
-            Gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-            Gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-            Gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            Gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-            // unbinde texture
+            Gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            Gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            Gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+            Gl.TexParameterI(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            Gl.GenerateMipmap(TextureTarget.Texture2D);
+
             Gl.BindTexture(TextureTarget.Texture2D, 0);
 
             Gl.EnableVertexAttribArray(3);

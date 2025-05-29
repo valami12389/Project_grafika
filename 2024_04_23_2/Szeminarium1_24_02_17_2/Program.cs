@@ -162,7 +162,7 @@ namespace Szeminarium1_24_02_17_2
                 case Key.Space:
                     cubeArrangementModel.AnimationEnabeld = !cubeArrangementModel.AnimationEnabeld;
                     break;
-                case Key.C: 
+                case Key.C:
                     cameraDescriptor.ToggleCameraMode();
                     break;
             }
@@ -198,8 +198,13 @@ namespace Szeminarium1_24_02_17_2
         }
         private static unsafe void DrawAsteroids()
         {
+
+
             foreach (var asteroid in asteroids)
             {
+                int shininessLoc = Gl.GetUniformLocation(program, ShininessVariableName);
+                Gl.Uniform1(shininessLoc, 100.0f);
+
                 // Create transformation matrix
                 Matrix4X4<float> scale = Matrix4X4.CreateScale(asteroid.Scale);
                 Matrix4X4<float> rotation = Matrix4X4.CreateFromAxisAngle(asteroid.RotationAxis, asteroid.RotationAngle);
@@ -211,6 +216,8 @@ namespace Szeminarium1_24_02_17_2
                 Gl.BindVertexArray(asteroid.GlObject.Vao);
                 Gl.DrawElements(GLEnum.Triangles, asteroid.GlObject.IndexArrayLength, GLEnum.UnsignedInt, null);
                 Gl.BindVertexArray(0);
+
+                Gl.Uniform1(shininessLoc, Shininess);
             }
         }
 
@@ -278,7 +285,7 @@ namespace Szeminarium1_24_02_17_2
             float speed = (float)(Random.Shared.NextDouble() * 10 + 1);
 
             var asteroidObj = ObjResourceReader.CreateAsteroidWithColor(Gl, asteroidColor);
-            asteroids.Add(new Asteroid(asteroidObj, position, scale,speed,spaceship.Position));
+            asteroids.Add(new Asteroid(asteroidObj, position, scale, speed, spaceship.Position));
         }
 
         private static unsafe void Window_Render(double deltaTime)
@@ -303,7 +310,7 @@ namespace Szeminarium1_24_02_17_2
 
             DrawSkyBox();
 
-            ImGuiNET.ImGui.Begin("Health Status",ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
+            ImGuiNET.ImGui.Begin("Health Status", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
             ImGuiNET.ImGui.SetWindowPos(new System.Numerics.Vector2(10, 10));
             ImGuiNET.ImGui.SetWindowSize(new System.Numerics.Vector2(200, 50));
 
@@ -334,6 +341,13 @@ namespace Szeminarium1_24_02_17_2
 
         private static unsafe void DrawSkyBox()
         {
+
+            int isSkyboxLocation = Gl.GetUniformLocation(program, "isSkybox");
+            if (isSkyboxLocation != -1)
+            {
+                Gl.Uniform1(isSkyboxLocation, 1);
+            }
+
             Matrix4X4<float> modelMatrix = Matrix4X4.CreateScale(400f);
             SetModelMatrix(modelMatrix);
             Gl.BindVertexArray(skyBox.Vao);
@@ -357,6 +371,11 @@ namespace Szeminarium1_24_02_17_2
             CheckError();
             Gl.BindTexture(TextureTarget.Texture2D, 0);
             CheckError();
+
+            if (isSkyboxLocation != -1)
+            {
+                Gl.Uniform1(isSkyboxLocation, 0); 
+            }
         }
 
         private static unsafe void SetLightColor()
@@ -368,7 +387,7 @@ namespace Szeminarium1_24_02_17_2
                 throw new Exception($"{LightColorVariableName} uniform not found on shader.");
             }
 
-            Gl.Uniform3(location, 1f, 1f, 1f);
+            Gl.Uniform3(location, 1.2f, 1.2f, 1.0f);
             CheckError();
         }
 
@@ -481,12 +500,12 @@ namespace Szeminarium1_24_02_17_2
             for (int i = 0; i < 100; i++)
             {
                 var position = new Vector3D<float>(
-                    (float)(Random.Shared.NextDouble() * 400) ,
+                    (float)(Random.Shared.NextDouble() * 400),
                     (float)(Random.Shared.NextDouble() * 400),
                     (float)(Random.Shared.NextDouble() * 400)
                 );
 
-                float scale = (float)(Random.Shared.NextDouble() * 2.5 + 0.5);
+                float scale = (float)(Random.Shared.NextDouble() * 3.0 + 1.0);
                 float speed = (float)(Random.Shared.NextDouble() * 10 + 1);
 
                 var asteroidObj = ObjResourceReader.CreateAsteroidWithColor(Gl, asteroidColor);
@@ -536,9 +555,9 @@ namespace Szeminarium1_24_02_17_2
 
         private static bool CheckCollisionAdjustable(Spaceship spaceship, Asteroid asteroid)
         {
-            const float SPACESHIP_COLLISION_SCALE = 0.25f; 
-            const float ASTEROID_COLLISION_SCALE = 0.7f;  
-            const float DISTANCE_MULTIPLIER = 0.8f;       
+            const float SPACESHIP_COLLISION_SCALE = 0.25f;
+            const float ASTEROID_COLLISION_SCALE = 0.7f;
+            const float DISTANCE_MULTIPLIER = 0.8f;
 
             var distance = Vector3D.Distance(spaceship.Position, asteroid.Position);
             var maxAllowedDistance = (spaceship.BoundingBoxSize.X * SPACESHIP_COLLISION_SCALE +
@@ -550,10 +569,10 @@ namespace Szeminarium1_24_02_17_2
         private static unsafe void SetViewMatrix()
         {
             Matrix4X4<float> viewMatrix = Matrix4X4.CreateLookAt(
-                cameraDescriptor.Position,
-                cameraDescriptor.Target,
-                cameraDescriptor.UpVector
-            );
+               cameraDescriptor.Position,
+               cameraDescriptor.Target,
+               cameraDescriptor.UpVector
+           );
 
             int location = Gl.GetUniformLocation(program, ViewMatrixVariableName);
             if (location == -1)
