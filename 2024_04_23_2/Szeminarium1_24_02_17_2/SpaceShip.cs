@@ -94,6 +94,22 @@ namespace Szeminarium1_24_02_17_2
             Position += new Vector3D<float>(0, -Speed * deltaTime, 0);
         }
 
+        public Vector3D<float> ForwardVector
+        {
+            get
+            {
+                return Vector3D.Normalize(new Vector3D<float>(0, 0, 1));
+            }
+        }
+
+        public Vector3D<float> RightVector
+        {
+            get
+            {
+                return Vector3D.Normalize(new Vector3D<float>(1, 0, 0));
+            }
+        }
+
         public void Update(float deltaTime)
         {
 

@@ -4,6 +4,7 @@ using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.OpenGL.Extensions.ImGui;
 using Silk.NET.Windowing;
+using System.Reflection;
 
 namespace Szeminarium1_24_02_17_2
 {
@@ -35,6 +36,7 @@ namespace Szeminarium1_24_02_17_2
 
         private static float Shininess = 50;
         private static List<Asteroid> asteroids = new List<Asteroid>();
+        private static List<Missile> activeMissiles = new List<Missile>();
 
         private const string ModelMatrixVariableName = "uModel";
         private const string NormalMatrixVariableName = "uNormal";
@@ -47,6 +49,12 @@ namespace Szeminarium1_24_02_17_2
         private const string LightPositionVariableName = "lightPos";
         private const string ViewPosVariableName = "viewPos";
         private const string ShininessVariableName = "shininess";
+
+        private static int maxMissiles = 40; 
+        private static int currentMissiles = 20; 
+        private static float reloadTime = 2.0f; 
+        private static float reloadTimer = 0.0f; 
+        private static bool isReloading = false;
 
         static void Main(string[] args)
         {
@@ -165,6 +173,7 @@ namespace Szeminarium1_24_02_17_2
                 case Key.C:
                     cameraDescriptor.ToggleCameraMode();
                     break;
+
             }
         }
 
@@ -194,7 +203,41 @@ namespace Szeminarium1_24_02_17_2
                     spaceship.isMovingDown = false;
                     spaceship.StopMovingUpDown();
                     break;
+                case Key.Enter:
+                    FireMissiles();
+                    break;
             }
+        }
+
+        private static void FireMissiles()
+        {
+
+            if(isReloading || currentMissiles <= 0)
+            {
+                if (currentMissiles <= 0 && !isReloading)
+                {
+                    isReloading = true;
+                    reloadTimer = reloadTime;
+                }
+                return;
+            }
+
+            float[] missileColor = new float[] { 1.0f, 0.0f, 0.0f, 1.0f };
+
+            Vector3D<float> forwardDirection = Vector3D.Normalize(spaceship.ForwardVector);
+
+            Vector3D<float> rightOffset = new Vector3D<float>(1.0f, 0.0f, 0.0f); 
+            var missile1Obj = ObjResourceReader.CreateMissileWithColor(Gl, missileColor);
+            var missile1Pos = spaceship.Position + rightOffset;
+            missile1Pos += forwardDirection * 2.0f;
+            activeMissiles.Add(new Missile(missile1Obj, missile1Pos, forwardDirection));
+
+            var missile2Obj = ObjResourceReader.CreateMissileWithColor(Gl, missileColor);
+            var missile2Pos = spaceship.Position - rightOffset;
+            missile2Pos += forwardDirection * 2.0f;
+            activeMissiles.Add(new Missile(missile2Obj, missile2Pos, forwardDirection));
+
+            currentMissiles -= 2;
         }
         private static unsafe void DrawAsteroids()
         {
@@ -205,7 +248,6 @@ namespace Szeminarium1_24_02_17_2
                 int shininessLoc = Gl.GetUniformLocation(program, ShininessVariableName);
                 Gl.Uniform1(shininessLoc, 100.0f);
 
-                // Create transformation matrix
                 Matrix4X4<float> scale = Matrix4X4.CreateScale(asteroid.Scale);
                 Matrix4X4<float> rotation = Matrix4X4.CreateFromAxisAngle(asteroid.RotationAxis, asteroid.RotationAngle);
                 Matrix4X4<float> translation = Matrix4X4.CreateTranslation(asteroid.Position);
@@ -226,10 +268,54 @@ namespace Szeminarium1_24_02_17_2
             cubeArrangementModel.AdvanceTime(deltaTime);
             spaceship.Update((float)deltaTime);
 
+            if (isReloading)
+            {
+                reloadTimer -= (float)deltaTime;
+                if (reloadTimer <= 0)
+                {
+                    currentMissiles = maxMissiles;
+                    isReloading = false;
+                }
+            }
 
-            Console.WriteLine($"Frame update - Health: {spaceship.CurrentHealth}, Invuln: {spaceship.invulnerabilityTimer}");
+            foreach (var missile in activeMissiles)
+            {
+                missile.Update((float)deltaTime);
+            }
 
+            activeMissiles.RemoveAll(m => Vector3D.Distance(m.Position, spaceship.Position) > 500f);
+
+
+           
+            List<Missile> missilesToRemove = new List<Missile>();
             List<Asteroid> asteroidsToRemove = new List<Asteroid>();
+
+            for (int i = activeMissiles.Count - 1; i >= 0; i--)
+            {
+                for (int j = asteroids.Count - 1; j >= 0; j--)
+                {
+                    if (CheckMissileAsteroidCollision(activeMissiles[i], asteroids[j]))
+                    {
+                        activeMissiles.RemoveAt(i);
+                        asteroids.RemoveAt(j);
+                        break;
+                    }
+                }
+            }
+
+            foreach (var missile in missilesToRemove)
+    {
+                missile.GlObject.ReleaseGlObject();
+                activeMissiles.Remove(missile);
+            }
+            foreach (var asteroid in asteroidsToRemove)
+            {
+                asteroid.GlObject.ReleaseGlObject();
+                asteroids.Remove(asteroid);
+                AddNewAsteroid();
+            }
+
+
             foreach (var asteroid in asteroids)
             {
 
@@ -268,6 +354,22 @@ namespace Szeminarium1_24_02_17_2
             controller.Update((float)deltaTime);
         }
 
+        private static bool CheckMissileAsteroidCollision(Missile missile, Asteroid asteroid)
+        {
+            const float MISSILE_COLLISION_RADIUS = 8.0f; 
+            const float ASTEROID_COLLISION_SCALE = 5.0f; 
+
+            float distance = Vector3D.Distance(missile.Position, asteroid.Position);
+            float collisionDistance = MISSILE_COLLISION_RADIUS + asteroid.Scale * ASTEROID_COLLISION_SCALE*1.5f;
+
+            if (distance < collisionDistance)
+            {
+                Console.WriteLine($"🎯 TALÁLAT! Távolság: {distance:F2}, Hitbox határ: {collisionDistance:F2}");
+                return true;
+            }
+            return false;
+        }
+
         private static void AddNewAsteroid()
         {
             float[] asteroidColor = [0.85f, 0.85f, 0.85f, 1.0f];
@@ -299,6 +401,18 @@ namespace Szeminarium1_24_02_17_2
 
             SetViewMatrix();
             SetProjectionMatrix();
+
+            foreach (var missile in activeMissiles)
+            {
+                Matrix4X4<float> modelMatrix = Matrix4X4.CreateScale(0.5f) *
+                                              Matrix4X4.CreateTranslation(missile.Position);
+                SetModelMatrix(modelMatrix);
+
+                Gl.BindVertexArray(missile.GlObject.Vao);
+                Gl.DrawElements(GLEnum.Triangles, missile.GlObject.IndexArrayLength, GLEnum.UnsignedInt, null);
+                Gl.BindVertexArray(0);
+            }
+
             DrawAsteroids();
 
             SetLightColor();
@@ -309,6 +423,24 @@ namespace Szeminarium1_24_02_17_2
             DrawPulsingSpaceShip();
 
             DrawSkyBox();
+
+            ImGuiNET.ImGui.Begin("Ammo Status", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
+            ImGuiNET.ImGui.SetWindowPos(new System.Numerics.Vector2(10, 70));
+            ImGuiNET.ImGui.SetWindowSize(new System.Numerics.Vector2(200, 50));
+
+            if (isReloading)
+            {
+                float reloadProgress = 1.0f - (reloadTimer / reloadTime);
+                ImGuiNET.ImGui.Text("Reloading...");
+                ImGuiNET.ImGui.ProgressBar(reloadProgress,
+                    new System.Numerics.Vector2(180, 20),
+                    $"{reloadTimer.ToString("0.0")}s");
+            }
+            else
+            {
+                ImGuiNET.ImGui.Text($"Missiles: {currentMissiles}/{maxMissiles}");
+            }
+
 
             ImGuiNET.ImGui.Begin("Health Status", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
             ImGuiNET.ImGui.SetWindowPos(new System.Numerics.Vector2(10, 10));

@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <None Remove="Resources\asteroid.obj" />
+    <None Remove="Resources\missile2.obj" />
     <None Remove="Resources\skybox.png" />
     <None Remove="Resources\skyboxstar.jpg" />
     <None Remove="Resources\skyboxstar2.png" />
@@ -21,6 +22,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\asteroid.obj" />
+    <EmbeddedResource Include="Resources\missile2.obj" />
     <EmbeddedResource Include="Resources\skybox.png" />
     <EmbeddedResource Include="Resources\skyboxstar.jpg" />
     <EmbeddedResource Include="Resources\skyboxstar2.png" />

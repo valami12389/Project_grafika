@@ -127,7 +127,7 @@ namespace Szeminarium1_24_02_17_2
             List<float[]> objTextures;
             List<int[][]> objFaces;
 
-            ReadObjDataForSpaceship(out objVertices, out objNormals, out objTextures, out objFaces);
+            ReadObjData("spaceship.obj",out objVertices, out objNormals, out objTextures, out objFaces);
 
             List<float> glVertices = new List<float>();
             List<float> glColors = new List<float>();
@@ -223,7 +223,8 @@ namespace Szeminarium1_24_02_17_2
             }
         }
 
-        private static unsafe void ReadObjDataForSpaceship(
+        private static unsafe void ReadObjData(
+            string objFileName,
             out List<float[]> objVertices,
             out List<float[]> objNormals,
             out List<float[]> objTextures,
@@ -234,19 +235,13 @@ namespace Szeminarium1_24_02_17_2
             objTextures = new List<float[]>();
             objFaces = new List<int[][]>();
 
-            // Get the assembly where the resources are embedded
             var assembly = Assembly.GetExecutingAssembly();
-            // Get the resource name (case sensitive!)
-            string resourceName = "Szeminarium1_24_02_17_2.Resources.spaceship.obj";
+            string resourceName = $"Szeminarium1_24_02_17_2.Resources.{objFileName}";
 
             using (Stream objStream = assembly.GetManifestResourceStream(resourceName))
             {
                 if (objStream == null)
-                {
-                    // List all available resources to help debug
-                    string[] resources = assembly.GetManifestResourceNames();
-                    throw new FileNotFoundException($"Resource '{resourceName}' not found. Available resources: {string.Join(", ", resources)}");
-                }
+                    throw new FileNotFoundException($"Resource '{resourceName}' not found.");
 
                 using (StreamReader objReader = new StreamReader(objStream))
                 {
@@ -267,39 +262,51 @@ namespace Szeminarium1_24_02_17_2
                         switch (lineClassifier)
                         {
                             case "v":
-                                float[] vertex = new float[3];
-                                for (int i = 0; i < 3 && i < lineData.Length; i++)
-                                    vertex[i] = float.Parse(lineData[i], CultureInfo.InvariantCulture);
-                                objVertices.Add(vertex);
+                                objVertices.Add(lineData.Select(x => float.Parse(x, CultureInfo.InvariantCulture)).ToArray());
                                 break;
                             case "vn":
-                                float[] normal = new float[3];
-                                for (int i = 0; i < 3 && i < lineData.Length; i++)
-                                    normal[i] = float.Parse(lineData[i], CultureInfo.InvariantCulture);
-                                objNormals.Add(normal);
+                                objNormals.Add(lineData.Select(x => float.Parse(x, CultureInfo.InvariantCulture)).ToArray());
                                 break;
                             case "vt":
-                                float[] texture = new float[2];
-                                for (int i = 0; i < 2 && i < lineData.Length; i++)
-                                    texture[i] = float.Parse(lineData[i], CultureInfo.InvariantCulture);
-                                objTextures.Add(texture);
+                                objTextures.Add(lineData.Select(x => float.Parse(x, CultureInfo.InvariantCulture)).ToArray());
                                 break;
                             case "f":
-                                int[][] face = new int[lineData.Length][];
-                                for (int i = 0; i < lineData.Length; i++)
+                                objFaces.Add(lineData.Select(part =>
                                 {
-                                    var indices = lineData[i].Split('/');
-                                    face[i] = new int[3];
-                                    face[i][0] = indices.Length > 0 && !string.IsNullOrEmpty(indices[0]) ? int.Parse(indices[0]) : 0;
-                                    face[i][1] = indices.Length > 1 && !string.IsNullOrEmpty(indices[1]) ? int.Parse(indices[1]) : 0;
-                                    face[i][2] = indices.Length > 2 && !string.IsNullOrEmpty(indices[2]) ? int.Parse(indices[2]) : 0;
-                                }
-                                objFaces.Add(face);
+                                    var indices = part.Split('/');
+                                    return new int[]
+                                    {
+                                int.Parse(indices[0]),
+                                indices.Length > 1 && !string.IsNullOrEmpty(indices[1]) ? int.Parse(indices[1]) : 0,
+                                indices.Length > 2 && !string.IsNullOrEmpty(indices[2]) ? int.Parse(indices[2]) : 0
+                                    };
+                                }).ToArray());
                                 break;
                         }
                     }
                 }
             }
+        }
+
+        public static unsafe GlObject CreateMissileWithColor(GL Gl, float[] faceColor)
+        {
+            uint vao = Gl.GenVertexArray();
+            Gl.BindVertexArray(vao);
+
+            List<float[]> objVertices;
+            List<float[]> objNormals;
+            List<float[]> objTextures;
+            List<int[][]> objFaces;
+
+            ReadObjData("missile2.obj", out objVertices, out objNormals, out objTextures, out objFaces);
+
+            List<float> glVertices = new List<float>();
+            List<float> glColors = new List<float>();
+            List<uint> glIndices = new List<uint>();
+
+            CreateGlArraysFromObjArrays(faceColor, objVertices, objNormals, objTextures, objFaces, glVertices, glColors, glIndices);
+
+            return CreateOpenGlObject(Gl, vao, glVertices, glColors, glIndices);
         }
     }
 }
