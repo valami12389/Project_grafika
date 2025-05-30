@@ -273,7 +273,9 @@ namespace Szeminarium1_24_02_17_2
 
             if (gameOver)
             {
-                controller.Update((float)deltaTime); 
+                controller.Update((float)deltaTime);
+
+                return;
 
             }
 
@@ -326,7 +328,7 @@ namespace Szeminarium1_24_02_17_2
             }
 
             foreach (var missile in missilesToRemove)
-    {
+            {
                 missile.GlObject.ReleaseGlObject();
                 activeMissiles.Remove(missile);
             }
@@ -341,8 +343,10 @@ namespace Szeminarium1_24_02_17_2
             {
                 gameOver = true;
                 gameWon = false;
+                return;
             }
 
+            List<Asteroid> damageAsteroidsToRemove = new List<Asteroid>();
 
             foreach (var asteroid in asteroids)
             {
@@ -585,10 +589,9 @@ namespace Szeminarium1_24_02_17_2
                     new System.Numerics.Vector2(180, 20),
                     $"{spaceship.CurrentHealth}/{spaceship.MaxHealth}");
                 ImGuiNET.ImGui.PopStyleColor();
+                controller.Render();
             }
             else {
-                controller.Update((float)deltaTime);
-
                 ImGui.SetNextWindowPos(new System.Numerics.Vector2(window.Size.X / 2 - 150, window.Size.Y / 2 - 100));
                 ImGui.SetNextWindowSize(new System.Numerics.Vector2(300, 200));
                 ImGui.Begin("Game Over", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse);
@@ -615,8 +618,10 @@ namespace Szeminarium1_24_02_17_2
                 }
 
                 ImGui.End();
-            }
                 controller.Render();
+                return;
+            }
+            
         }
 
         private static unsafe void DrawSkyBox()
