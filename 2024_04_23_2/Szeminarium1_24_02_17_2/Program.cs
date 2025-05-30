@@ -37,6 +37,7 @@ namespace Szeminarium1_24_02_17_2
         private static float Shininess = 50;
         private static List<Asteroid> asteroids = new List<Asteroid>();
         private static List<Missile> activeMissiles = new List<Missile>();
+        private static List<Explosion> activeExplosions = new List<Explosion>();
 
         private const string ModelMatrixVariableName = "uModel";
         private const string NormalMatrixVariableName = "uNormal";
@@ -276,6 +277,16 @@ namespace Szeminarium1_24_02_17_2
 
             }
 
+            for(int i = activeExplosions.Count - 1; i >= 0; i--)
+            {
+                activeExplosions[i].Update((float)deltaTime);
+                if (!activeExplosions[i].IsActive)
+                {
+                    activeExplosions[i].GlObject.ReleaseGlObject();
+                    activeExplosions.RemoveAt(i);
+                }
+            }
+
             cubeArrangementModel.AdvanceTime(deltaTime);
             spaceship.Update((float)deltaTime);
 
@@ -381,9 +392,23 @@ namespace Szeminarium1_24_02_17_2
 
             if (distance < collisionDistance)
             {
-                Console.WriteLine($"🎯 TALÁLAT! Távolság: {distance:F2}, Hitbox határ: {collisionDistance:F2}");
+                Console.WriteLine($"TALÁLAT! Távolság: {distance:F2}, Hitbox határ: {collisionDistance:F2}");
+                for (int i = 0; i < 3; i++) 
+                {
+                    Vector3D<float> explosionPos = (missile.Position + asteroid.Position) / 2.0f;
+                    explosionPos += new Vector3D<float>(
+                        (float)(Random.Shared.NextDouble() - 0.5) * 5.0f,
+                        (float)(Random.Shared.NextDouble() - 0.5) * 5.0f,
+                        (float)(Random.Shared.NextDouble() - 0.5) * 5.0f
+                    );
+
+                    float[] baseColor = new float[] { 1.0f, 0.5f, 0.0f, 1.0f };
+                    var explosionObj = ObjResourceReader.CreateSphereWithColor(Gl, baseColor);
+                    activeExplosions.Add(new Explosion(explosionObj, explosionPos,
+                        (float)(Random.Shared.NextDouble() * 0.5 + 0.5)));
+                }
                 score++;
-                if (score >= 10) {
+                if (score >= 50) {
                     gameWon = true;
                     gameOver = true;
                 }
@@ -399,6 +424,12 @@ namespace Szeminarium1_24_02_17_2
             gameWon = false;
 
             spaceship.Reset();
+
+            foreach (var explosion in activeExplosions)
+            {
+                explosion.GlObject.ReleaseGlObject();
+            }
+            activeExplosions.Clear();
 
             foreach (var asteroid in asteroids)
             {
@@ -456,6 +487,33 @@ namespace Szeminarium1_24_02_17_2
 
                 SetViewMatrix();
                 SetProjectionMatrix();
+
+                Gl.Enable(EnableCap.Blend);
+                Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One);
+
+
+                foreach (var explosion in activeExplosions)
+                {
+                    Matrix4X4<float> modelMatrix = Matrix4X4.CreateScale(explosion.Scale) *
+                                                 Matrix4X4.CreateTranslation(explosion.Position);
+                    SetModelMatrix(modelMatrix);
+
+                    int colorLoc = Gl.GetUniformLocation(program, "uColor");
+                    if (colorLoc != -1)
+                    {
+                        Gl.Uniform4(colorLoc, explosion.Color[0], explosion.Color[1],
+                                   explosion.Color[2], explosion.Color[3]);
+                    }
+
+                    Gl.Uniform1(Gl.GetUniformLocation(program, ShininessVariableName), 5.0f);
+
+                    Gl.BindVertexArray(explosion.GlObject.Vao);
+                    Gl.DrawElements(GLEnum.Triangles, explosion.GlObject.IndexArrayLength,
+                                  GLEnum.UnsignedInt, null);
+                    Gl.BindVertexArray(0);
+                }
+
+                Gl.Disable(EnableCap.Blend);
 
                 foreach (var missile in activeMissiles)
                 {

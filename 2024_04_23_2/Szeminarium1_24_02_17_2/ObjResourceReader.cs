@@ -223,6 +223,68 @@ namespace Szeminarium1_24_02_17_2
             }
         }
 
+        public static GlObject CreateSphereWithColor(GL gl, float[] color)
+        {
+            var glVertices = new List<float>();
+            var glColors = new List<float>();
+            var glIndices = new List<uint>();
+
+            int segments = 16;
+            int rings = 16;
+            float radius = 1.0f;
+
+            for (int i = 0; i <= rings; i++)
+            {
+                double lat = Math.PI * (-0.5 + (double)i / rings);
+                double z = Math.Sin(lat);
+                double zr = Math.Cos(lat);
+
+                for (int j = 0; j <= segments; j++)
+                {
+                    double lng = 2 * Math.PI * (double)j / segments;
+                    double x = Math.Cos(lng) * zr;
+                    double y = Math.Sin(lng) * zr;
+
+                    glVertices.Add((float)(x * radius));
+                    glVertices.Add((float)(y * radius));
+                    glVertices.Add((float)(z * radius));
+
+                    glVertices.Add((float)x);
+                    glVertices.Add((float)y);
+                    glVertices.Add((float)z);
+
+                    glVertices.Add((float)j / segments);
+                    glVertices.Add((float)i / rings);
+
+                    glColors.AddRange(color);
+                }
+            }
+            for (int i = 0; i < rings; i++)
+            {
+                for (int j = 0; j < segments; j++)
+                {
+                    uint i0 = (uint)(i * (segments + 1) + j);
+                    uint i1 = (uint)((i + 1) * (segments + 1) + j);
+                    uint i2 = (uint)((i + 1) * (segments + 1) + j + 1);
+                    uint i3 = (uint)(i * (segments + 1) + j + 1);
+
+                    glIndices.Add(i0);
+                    glIndices.Add(i1);
+                    glIndices.Add(i2);
+
+                    glIndices.Add(i0);
+                    glIndices.Add(i2);
+                    glIndices.Add(i3);
+                }
+            }
+
+            uint vao = gl.GenVertexArray();
+            gl.BindVertexArray(vao);
+
+            return CreateOpenGlObject(gl, vao, glVertices, glColors, glIndices);
+        }
+
+
         private static unsafe void ReadObjData(
             string objFileName,
             out List<float[]> objVertices,
