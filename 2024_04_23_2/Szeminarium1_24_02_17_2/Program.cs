@@ -56,6 +56,10 @@ namespace Szeminarium1_24_02_17_2
         private static float reloadTimer = 0.0f; 
         private static bool isReloading = false;
 
+        private static int score = 0;
+        private static bool gameOver = false;
+        private static bool gameWon = false;
+
         static void Main(string[] args)
         {
             System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
@@ -265,6 +269,13 @@ namespace Szeminarium1_24_02_17_2
 
         private static void Window_Update(double deltaTime)
         {
+
+            if (gameOver)
+            {
+                controller.Update((float)deltaTime); 
+
+            }
+
             cubeArrangementModel.AdvanceTime(deltaTime);
             spaceship.Update((float)deltaTime);
 
@@ -313,6 +324,12 @@ namespace Szeminarium1_24_02_17_2
                 asteroid.GlObject.ReleaseGlObject();
                 asteroids.Remove(asteroid);
                 AddNewAsteroid();
+            }
+
+            if (spaceship.CurrentHealth <= 0)
+            {
+                gameOver = true;
+                gameWon = false;
             }
 
 
@@ -365,9 +382,46 @@ namespace Szeminarium1_24_02_17_2
             if (distance < collisionDistance)
             {
                 Console.WriteLine($"🎯 TALÁLAT! Távolság: {distance:F2}, Hitbox határ: {collisionDistance:F2}");
+                score++;
+                if (score >= 10) {
+                    gameWon = true;
+                    gameOver = true;
+                }
                 return true;
             }
             return false;
+        }
+
+        private static void ResetGame() {
+
+            score = 0;
+            gameOver = false;
+            gameWon = false;
+
+            spaceship.Reset();
+
+            foreach (var asteroid in asteroids)
+            {
+                asteroid.GlObject.ReleaseGlObject();
+            }
+            asteroids.Clear();
+
+            foreach (var missile in activeMissiles)
+            {
+                missile.GlObject.ReleaseGlObject();
+            }
+            activeMissiles.Clear();
+
+            cameraDescriptor = new CameraDescriptor(spaceship);
+
+            for (int i = 0; i < 100; i++)
+            {
+                AddNewAsteroid();
+            }
+
+            currentMissiles = maxMissiles;
+            isReloading = false;
+            reloadTimer = 0f;
         }
 
         private static void AddNewAsteroid()
@@ -396,79 +450,115 @@ namespace Szeminarium1_24_02_17_2
             Gl.Clear(ClearBufferMask.ColorBufferBit);
             Gl.Clear(ClearBufferMask.DepthBufferBit);
 
-
-            Gl.UseProgram(program);
-
-            SetViewMatrix();
-            SetProjectionMatrix();
-
-            foreach (var missile in activeMissiles)
+            if (!gameOver)
             {
-                Matrix4X4<float> modelMatrix = Matrix4X4.CreateScale(0.5f) *
-                                              Matrix4X4.CreateTranslation(missile.Position);
-                SetModelMatrix(modelMatrix);
+                Gl.UseProgram(program);
 
-                Gl.BindVertexArray(missile.GlObject.Vao);
-                Gl.DrawElements(GLEnum.Triangles, missile.GlObject.IndexArrayLength, GLEnum.UnsignedInt, null);
-                Gl.BindVertexArray(0);
-            }
+                SetViewMatrix();
+                SetProjectionMatrix();
 
-            DrawAsteroids();
+                foreach (var missile in activeMissiles)
+                {
+                    Matrix4X4<float> modelMatrix = Matrix4X4.CreateScale(0.5f) *
+                                                  Matrix4X4.CreateTranslation(missile.Position);
+                    SetModelMatrix(modelMatrix);
 
-            SetLightColor();
-            SetLightPosition();
-            SetViewerPosition();
-            SetShininess();
+                    Gl.BindVertexArray(missile.GlObject.Vao);
+                    Gl.DrawElements(GLEnum.Triangles, missile.GlObject.IndexArrayLength, GLEnum.UnsignedInt, null);
+                    Gl.BindVertexArray(0);
+                }
 
-            DrawPulsingSpaceShip();
+                DrawAsteroids();
 
-            DrawSkyBox();
+                SetLightColor();
+                SetLightPosition();
+                SetViewerPosition();
+                SetShininess();
 
-            ImGuiNET.ImGui.Begin("Ammo Status", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
-            ImGuiNET.ImGui.SetWindowPos(new System.Numerics.Vector2(10, 70));
-            ImGuiNET.ImGui.SetWindowSize(new System.Numerics.Vector2(200, 50));
+                DrawPulsingSpaceShip();
 
-            if (isReloading)
-            {
-                float reloadProgress = 1.0f - (reloadTimer / reloadTime);
-                ImGuiNET.ImGui.Text("Reloading...");
-                ImGuiNET.ImGui.ProgressBar(reloadProgress,
+                DrawSkyBox();
+
+                ImGui.Begin("Score", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
+                ImGui.SetWindowPos(new System.Numerics.Vector2(10, 130));
+                ImGui.SetWindowSize(new System.Numerics.Vector2(200, 30));
+                ImGui.Text($"Score: {score}");
+                ImGui.End();
+
+                ImGuiNET.ImGui.Begin("Ammo Status", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
+                ImGuiNET.ImGui.SetWindowPos(new System.Numerics.Vector2(10, 70));
+                ImGuiNET.ImGui.SetWindowSize(new System.Numerics.Vector2(200, 50));
+
+                if (isReloading)
+                {
+                    float reloadProgress = 1.0f - (reloadTimer / reloadTime);
+                    ImGuiNET.ImGui.Text("Reloading...");
+                    ImGuiNET.ImGui.ProgressBar(reloadProgress,
+                        new System.Numerics.Vector2(180, 20),
+                        $"{reloadTimer.ToString("0.0")}s");
+                }
+                else
+                {
+                    ImGuiNET.ImGui.Text($"Missiles: {currentMissiles}/{maxMissiles}");
+                }
+
+
+                ImGuiNET.ImGui.Begin("Health Status", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
+                ImGuiNET.ImGui.SetWindowPos(new System.Numerics.Vector2(10, 10));
+                ImGuiNET.ImGui.SetWindowSize(new System.Numerics.Vector2(200, 50));
+
+                float healthPercentage = spaceship.CurrentHealth / spaceship.MaxHealth;
+                System.Numerics.Vector4 healthColor = healthPercentage > 0.6f ?
+                    new System.Numerics.Vector4(0, 1, 0, 1) :
+                    healthPercentage > 0.3f ?
+                    new System.Numerics.Vector4(1, 1, 0, 1) :
+                    new System.Numerics.Vector4(1, 0, 0, 1);
+
+                ImGuiNET.ImGui.Text("Spaceship Health:");
+                ImGuiNET.ImGui.PushStyleColor(ImGuiCol.PlotHistogram, healthColor);
+                ImGuiNET.ImGui.ProgressBar(healthPercentage,
                     new System.Numerics.Vector2(180, 20),
-                    $"{reloadTimer.ToString("0.0")}s");
+                    $"{spaceship.CurrentHealth}/{spaceship.MaxHealth}");
+                ImGuiNET.ImGui.PopStyleColor();
+
+                ImGuiNET.ImGui.Text("Spaceship Health:");
+                ImGuiNET.ImGui.PushStyleColor(ImGuiCol.PlotHistogram, healthColor);
+                ImGuiNET.ImGui.ProgressBar(healthPercentage,
+                    new System.Numerics.Vector2(180, 20),
+                    $"{spaceship.CurrentHealth}/{spaceship.MaxHealth}");
+                ImGuiNET.ImGui.PopStyleColor();
             }
-            else
-            {
-                ImGuiNET.ImGui.Text($"Missiles: {currentMissiles}/{maxMissiles}");
+            else {
+                controller.Update((float)deltaTime);
+
+                ImGui.SetNextWindowPos(new System.Numerics.Vector2(window.Size.X / 2 - 150, window.Size.Y / 2 - 100));
+                ImGui.SetNextWindowSize(new System.Numerics.Vector2(300, 200));
+                ImGui.Begin("Game Over", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse);
+
+                if (gameWon)
+                {
+                    ImGui.Text("Mission Complete!");
+                    ImGui.Text($"Final Score: {score}");
+                }
+                else
+                {
+                    ImGui.Text("Game Over");
+                    ImGui.Text($"Your Score: {score}");
+                }
+
+                if (ImGui.Button("Play Again", new System.Numerics.Vector2(280, 50)))
+                {
+                    ResetGame();
+                }
+
+                if (ImGui.Button("Quit", new System.Numerics.Vector2(280, 50)))
+                {
+                    window.Close();
+                }
+
+                ImGui.End();
             }
-
-
-            ImGuiNET.ImGui.Begin("Health Status", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove);
-            ImGuiNET.ImGui.SetWindowPos(new System.Numerics.Vector2(10, 10));
-            ImGuiNET.ImGui.SetWindowSize(new System.Numerics.Vector2(200, 50));
-
-            float healthPercentage = spaceship.CurrentHealth / spaceship.MaxHealth;
-            System.Numerics.Vector4 healthColor = healthPercentage > 0.6f ?
-                new System.Numerics.Vector4(0, 1, 0, 1) :
-                healthPercentage > 0.3f ?
-                new System.Numerics.Vector4(1, 1, 0, 1) :
-                new System.Numerics.Vector4(1, 0, 0, 1);
-
-            ImGuiNET.ImGui.Text("Spaceship Health:");
-            ImGuiNET.ImGui.PushStyleColor(ImGuiCol.PlotHistogram, healthColor);
-            ImGuiNET.ImGui.ProgressBar(healthPercentage,
-                new System.Numerics.Vector2(180, 20),
-                $"{spaceship.CurrentHealth}/{spaceship.MaxHealth}");
-            ImGuiNET.ImGui.PopStyleColor();
-
-            ImGuiNET.ImGui.Text("Spaceship Health:");
-            ImGuiNET.ImGui.PushStyleColor(ImGuiCol.PlotHistogram, healthColor);
-            ImGuiNET.ImGui.ProgressBar(healthPercentage,
-                new System.Numerics.Vector2(180, 20),
-                $"{spaceship.CurrentHealth}/{spaceship.MaxHealth}");
-            ImGuiNET.ImGui.PopStyleColor();
-
-
-            controller.Render();
+                controller.Render();
         }
 
         private static unsafe void DrawSkyBox()

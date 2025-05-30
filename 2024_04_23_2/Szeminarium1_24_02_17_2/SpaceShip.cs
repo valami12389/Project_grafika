@@ -110,6 +110,20 @@ namespace Szeminarium1_24_02_17_2
             }
         }
 
+        public void Reset() {
+            Position = new Vector3D<float>(0, 0, 0);
+            CurrentHealth = MaxHealth;
+            invulnerabilityTimer = 0;
+            RollAngle = 0;
+            PitchAngle = 0;
+            isMovingLeft = false;
+            isMovingRight = false;
+            isMovingForward = false;
+            isMovingBackward = false;
+            isMovingUp = false;
+            isMovingDown = false;
+        }
+
         public void Update(float deltaTime)
         {
 
